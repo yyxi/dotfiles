@@ -1,0 +1,34 @@
+#
+# Executes commands at the start of an interactive session.
+#
+# Authors:
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#
+
+fpath=("$HOME/dotfiles/zsh/internal" "${fpath[@]}")
+autoload -U compinit && compinit
+
+# Source Prezto.
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
+fi
+
+# Customize to your needs...
+
+umask 0027
+export TERM="xterm-256color"
+
+export PATH=$HOME/dotfiles/bin:$HOME/.local/bin:$PATH
+
+if [[ -z "`tty | grep "pts"`" ]]; then
+    export ISCONSOLE="YES"
+fi
+
+bindkey -M vicmd "v" edit-command-line
+
+for f in $HOME/dotfiles/zsh/source/*; do
+    if [[ -f $f ]]
+    then
+        . $f
+    fi
+done

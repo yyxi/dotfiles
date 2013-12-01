@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# @description build restic backup program
+# @import console/info
+# @dependency git
+# @dependency go
+
+main () {
+    strict  true
+    verbose true
+
+    if [[ -d "${HOME}/.restic-dist" ]]
+    then
+        rm -rf "${HOME}/.restic-dist"
+    fi 
+
+    mkdir -p "${HOME}/.restic-dist/build"
+    mkdir -p "${HOME}/.restic-dist/bin"
+
+    git clone https://github.com/restic/restic.git "${HOME}/.restic-dist/build"
+
+    cd "${HOME}/.restic-dist/build" || exit
+
+    git checkout tags/v0.6.1
+
+    go run build.go
+    mv restic "${HOME}/.restic-dist/bin"
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.restic-dist/build" ]]
+    then
+        rm -rf "${HOME}/.restic-dist/build"
+    fi
+}

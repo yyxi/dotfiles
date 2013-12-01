@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+[ -d "$HOME/.bspwm-dist/bin/" ] && export PATH="$HOME/.bspwm-dist/bin:$PATH"

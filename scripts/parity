@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# @description parity docker image
+# @dependency docker
+# @dependency dig
+
+ip () {
+    dig +short myip.opendns.com @resolver1.opendns.com
+}
+
+main () {
+    strict  true
+    verbose true
+
+    local version="v1.8.3"
+
+    docker pull parity/parity:"${version}"
+    docker run -d --rm -it \
+        -p 127.0.0.1:48180:8180 \
+        -p 127.0.0.1:48545:8545 \
+        -p 127.0.0.1:48080:8080 \
+        -p 127.0.0.1:48546:8546 \
+        parity/parity:"${version}" \
+        --ipfs-api-interface 0.0.0.0 \
+        --jsonrpc-interface 0.0.0.0 \
+        --secretstore-interface 0.0.0.0 \
+        --secretstore-http-interface 0.0.0.0 \
+        --stratum-interface 0.0.0.0 \
+        --ui-interface 0.0.0.0 \
+        --ws-interface 0.0.0.0 \
+        --rpcaddr 0.0.0.0 \
+        --ui-no-validation \
+        --ws-origins all \
+        --warp \
+        --mode active \
+        --tracing off \
+        --pruning fast \
+        --db-compaction ssd \
+        --unsafe-expose \
+        --cache-size 1024
+
+    echo ssh -L 8180:127.0.0.1:48180 -L 8545:127.0.0.1:48545 -L 8080:127.0.0.1:48080 -L 8546:127.0.0.1:48546 "$(ip)"
+}
+

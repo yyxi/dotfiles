@@ -1,0 +1,42 @@
+URxvt*font:                 xft:Operator Mono for Powerline:style=Medium:size=12
+URxvt*italicFont:           xft:Operator Mono for Powerline:style=Medium Italic:size=12
+URxvt*boldFont:             xft:Operator Mono for Powerline:style=Bold:size=12
+URxvt*boldItalicFont:       xft:Operator Mono for Powerline:style=Bold Italic:size=12
+!URxvt*font:                 xft:Hack:style=Regular:size=12
+!URxvt*boldFont:             xft:Hack:style=Bold:size=12
+!URxvt*italicFont:           xft:Hack:style=Italic:size=12:slant=italic
+!URxvt*boldItalicFont:       xft:Hack:style=Italic:size=12:slant=italic
+URxvt*termName:             xterm-256color
+URxvt*urgentOnBell:         true
+URxvt*cursorBlink:          false
+URxvt*saveLines:            16384
+URxvt*iso14755:             false
+URxvt*iso14755_52:          false
+URxvt*pointerBlank:        true
+URxvt*letterSpace:          -1
+!URxvt*lineSpace:            -1
+URxvt*depth:                32
+!URxvt*shading:              0
+URxvt*background:           [99]#1d2021
+!URxvt*colorBD:              [97]#1d2021
+URxvt*borderColor:          [99]#1d2021
+URxvt*borderless:           false
+URxvt*externalBorder:       0
+URxvt*internalBorder:       10
+URxvt*foreground:           #fbf1c7
+URxvt*scrollBar:            false
+URxvt*mouseWheelScrollPage: false
+URxvt*scrollWithBuffer:     true
+URxvt*scrollTtyKeypress:    true
+URxvt*scrollTtyOutput:      false
+URxvt*secondaryScroll: true
+URxvt.perl-ext:             default,matcher,clipboard,font-size
+URxvt.matcher.button:       C1
+URxvt.url-select.launcher:  chromium-browser
+URxvt.clipboard.autocopy:   true
+URxvt.clipboard.copycmd:    xsel -ib
+URxvt.clipboard.pastecmd:   xsel -ob
+URxvt.keysym.C-equal:       perl:font-size:increase
+URxvt.keysym.C-minus:       perl:font-size:decrease
+URxvt.keysym.C-C:           perl:clipboard:copy
+URxvt.keysym.C-V:           perl:clipboard:paste

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# @import console/die
+# @import console/error
+# @import console/die
+# @import console/info
+# @import lang/exists
+
+downloadRclone ()
+{
+    verbose true
+    strict true
+
+    # exists gpg || die "Cannot find 'gpg' in path."
+    exists curl || die "Cannot find 'gpg' in path."
+    exists unzip || die "Cannot find 'unzip' in path."
+
+    [ -z "${RCLONE_BINARY}" ] && die "'RCLONE_BINARY' is not defined"
+
+    [ -z "${RCLONE_DIRECTORY}" ] && RCLONE_DIRECTORY="${MANAGE_REPOSITORY}/vendor/rclone"
+
+    if [ ! -f "${RCLONE_DIRECTORY}/rclone" ]
+    then
+        mkdir -p "${RCLONE_DIRECTORY}"
+        curl -0 -S -L --progress-bar "${RCLONE_BINARY}" -o "${RCLONE_DIRECTORY}/${RCLONE_BINARY##*/}"
+
+        unzip -j -d "${RCLONE_DIRECTORY}" "${RCLONE_DIRECTORY}/${RCLONE_BINARY##*/}"
+        # chmod +x "${RCLONE_DIRECTORY}/rclone"
+        #
+        # rm -f "${RCLONE_DIRECTORY}/${RCLONE_BINARY##*/}" \
+        #     "${RCLONE_DIRECTORY}/${RCLONE_SHA256SUMS##*/}" \
+        #     "${RCLONE_DIRECTORY}/${RCLONE_SHA256SUMS_SIGNATURE##*/}"
+    fi
+}

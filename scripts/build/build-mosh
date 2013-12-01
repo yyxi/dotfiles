@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# @description build mosh mobile shell
+#
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    # sudo -E apt-get install -y --no-install-suggests --no-install-recommends --force-yes \
+    # protobuf-compiler libprotobuf-dev \
+    # libncurses5-dev \
+    # zlib1g-dev \
+    # libutempter-dev \
+    # libssl-dev
+
+    if [[ -d "${HOME}/.mosh-dist" ]]
+    then
+        rm -rf "${HOME}/.mosh-dist"
+    fi 
+
+    mkdir -p "${HOME}/.mosh-dist/build"
+
+    git clone --depth 1 https://github.com/mobile-shell/mosh "${HOME}/.mosh-dist/build"
+
+    cd "${HOME}/.mosh-dist/build" || exit
+
+    ./autogen.sh
+    ./configure  --prefix="${HOME}/.mosh-dist"
+    make install
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.mosh-dist/build" ]]
+    then
+        rm -rf "${HOME}/.mosh-dist/build"
+    fi 
+}

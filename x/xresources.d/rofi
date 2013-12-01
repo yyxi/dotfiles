@@ -1,0 +1,37 @@
+rofi.opacity:                        85
+rofi.width:                          100%
+rofi.height:                         100%
+rofi.lines:                          16
+rofi.columns:                        1
+rofi.bw:                             0
+rofi.location:                       0
+rofi.padding:                        250
+rofi.yoffset:                        0
+rofi.xoffset:                        0
+rofi.fixed-num-lines:                true
+rofi.hmode:                          false
+rofi.terminal:                       urxvt
+rofi.font:                           Hack 16
+rofi.run-command:                    {cmd}
+rofi.run-shell-command:              {terminal} -e {cmd}
+rofi.disable-history:                false
+rofi.levenshtein-sort:               true
+rofi.case-sensitive:                 false
+rofi.sidebar-mode:                   false
+rofi.lazy-filter-limit:              5000
+rofi.eh:                             1
+rofi.auto-select:                    false
+rofi.parse-hosts:                    false
+rofi.fuzzy:                          false
+rofi.m:                              -1
+rofi.line-margin:                    2
+rofi.separator-style:                none
+rofi.hide-scrollbar:                 true
+rofi.color-enabled: true
+!                  bg       border   separator
+rofi.color-window: #32302f, #a89984, #a89984
+
+!                  bg       fg       bg-alt   hl-bg    hl-fg
+rofi.color-normal: #32302f, #ebdbb2, #3c3836, #665c54, #fbf1c7
+rofi.color-active: #d79921, #32302f, #d79921, #fabd2f, #32302f
+rofi.color-urgent: #cc241d, #32302f, #cc241d, #fb4934, #32302f

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# @description install x-dotfiles
+# @dependency zsh
+# @dependency git
+# @import dotfiles/runcoms
+
+main () {
+    strict  true
+    verbose true
+
+    if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
+        _ runcoms install "${HOME}"/dotfiles/x/runcoms
+    fi
+}
+

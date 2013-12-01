@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+[ -d "$HOME/.vim-dist/bin/" ] && export PATH="$HOME/.vim-dist/bin:$PATH"
+alias vi='vim'

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# @description build paper icon theme
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    if [[ -d "${HOME}/.paper-icon-theme-dist" ]]
+    then
+        rm -rf "${HOME}/.paper-icon-theme-dist"
+    fi 
+
+    mkdir -p "${HOME}/.paper-icon-theme-dist/build"
+
+    # sudo apt-get install -y --no-install-suggests --no-install-recommends \
+    #     autoconf \
+    #     automake \
+    #     pkg-config \
+    #     libgtk-3-dev \
+    #     gnome-themes-standard \
+    #     gtk2-engines-murrine
+
+    git clone --depth 1 --recursive https://github.com/snwh/paper-icon-theme.git "${HOME}/.paper-icon-theme-dist/build"
+
+    cd "${HOME}/.paper-icon-theme-dist/build" || exit
+    ./autogen.sh --prefix="${HOME}/.paper-icon-theme-dist"
+    make install
+
+    mkdir -p "${HOME}/.icons"
+
+    ln -s "${HOME}/.paper-icon-theme-dist/share/icons"/* "${HOME}/.icons"
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.paper-icon-theme-dist/build" ]]
+    then
+        rm -rf "${HOME}/.paper-icon-theme-dist/build"
+    fi
+}

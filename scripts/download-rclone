@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# @import rclone/downloadRclone
+# @description download and verify rclone binary
+
+main ()
+{
+    _ downloadRclone
+}

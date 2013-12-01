@@ -1,0 +1,18 @@
+directories:
+  script: scripts
+  module: scripts/modules
+  test: scripts/tests
+
+# Enable manage repository scripts
+enable:
+  - help
+
+# Environment variables
+env:
+  RESTIC_BINARY: "https://github.com/restic/restic/releases/download/v0.7.3/restic_0.7.3_linux_amd64.bz2"
+  RESTIC_SHA256SUMS: "https://github.com/restic/restic/releases/download/v0.7.3/SHA256SUMS"
+  RESTIC_SHA256SUMS_SIGNATURE: "https://github.com/restic/restic/releases/download/v0.7.3/SHA256SUMS.asc"
+  RCLONE_BINARY: "https://github.com/ncw/rclone/releases/download/v1.38/rclone-v1.38-linux-amd64.zip"
+
+# Default script
+default: help

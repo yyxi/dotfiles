@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#
+# @description build ARC theme
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    if [[ -d "${HOME}/.arc-theme-dist" ]]
+    then
+        rm -rf "${HOME}/.arc-theme-dist"
+    fi 
+
+    mkdir -p "${HOME}/.arc-theme-dist/build"
+
+    # sudo apt-get install -y --no-install-suggests --no-install-recommends \
+    #     autoconf \
+    #     automake \
+    #     pkg-config \
+    #     libgtk-3-dev \
+    #     gnome-themes-standard \
+    #     gtk2-engines-murrine
+
+    git clone --depth 1 --recursive https://github.com/horst3180/arc-theme  "${HOME}/.arc-theme-dist/build"
+
+    cd "${HOME}/.arc-theme-dist/build" || exit
+    ./autogen.sh --prefix="${HOME}/.arc-theme-dist" --disable-transparency \
+        --disable-metacity \
+        --disable-unity \
+        --disable-xfwm
+
+    make install
+
+    mkdir -p "${HOME}/.themes"
+    ln -s ~/.arc-theme-dist/share/themes/* "${HOME}/.themes"
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.arc-theme-dist/build" ]]
+    then
+        rm -rf "${HOME}/.arc-theme-dist/build"
+    fi
+}

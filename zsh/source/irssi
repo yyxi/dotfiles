@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+[ -d "$HOME/.irssi-dist/bin/" ] && export PATH="$HOME/.irssi-dist/bin:$PATH"
+alias irssi="TERM=screen-256color irssi"

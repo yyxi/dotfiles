@@ -1,0 +1,4 @@
+tmp/*
+.ropeproject
+vendor/restic
+vendor/rclone

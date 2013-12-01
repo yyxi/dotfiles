@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+[ -d "$HOME/.restic-dist/bin/" ] && export PATH="$HOME/.restic-dist/bin:$PATH"

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+[ -d "$HOME/.sxhkd-dist/bin/" ] && export PATH="$HOME/.sxhkd-dist/bin:$PATH"

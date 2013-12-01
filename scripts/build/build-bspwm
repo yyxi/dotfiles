@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# @description build bspwm tiling window manager
+#
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    if [[ -d "${HOME}/.bspwm-dist" ]]
+    then
+        rm -rf "${HOME}/.bspwm-dist"
+    fi 
+
+    mkdir -p "${HOME}/.bspwm-dist/build"
+
+    git clone --depth 1 https://github.com/baskerville/bspwm.git  "${HOME}/.bspwm-dist/build"
+
+    cd "${HOME}/.bspwm-dist/build" || exit
+    git fetch origin refs/tags/0.9.1
+    git reset --hard FETCH_HEAD
+
+    PREFIX="${HOME}/.bspwm-dist" make -j 2
+    PREFIX="${HOME}/.bspwm-dist" make install
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.bspwm-dist/build" ]]
+    then
+        rm -rf "${HOME}/.bspwm-dist/build"
+    fi 
+}

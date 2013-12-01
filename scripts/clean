@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# @description clean dotfiles
+# @import dotfiles/runcoms
+
+main () {
+    strict  true
+    verbose true
+
+    if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
+        _ runcoms clean "${HOME}"/dotfiles/zsh/runcoms || true
+    fi
+}
+

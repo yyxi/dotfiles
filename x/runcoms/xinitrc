@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# source "${HOME}/dotfiles/zsh/source/x"
+# source "${HOME}/dotfiles/zsh/source/sxhkd"
+# source "${HOME}/dotfiles/zsh/source/bspwm"
+
+export PATH="$HOME/dotfiles/x/bin:$HOME/.sxhkd-dist/bin:$HOME/.bspwm-dist/bin:$PATH"
+
+exec > "${HOME}"/.xinitrc.log 2>&1
+echo   "$HOME $UID $SHELL $USER $PATH"
+
+setres 1536 864
+# setres 1366 768 &
+xmodmap "${HOME}/dotfiles/x/xmodmap" &
+xbindkeys -f "${HOME}/dotfiles/x/xbindkeys" &
+xrdb -I"${HOME}" "${HOME}"/dotfiles/x/xresources &
+xsetroot -mod 4 4 -fg gray15 -bg black &
+xset fp+ "${HOME}/.fonts" &
+xset fp rehash &
+xautolock -time 15 -locker "${HOME}"/dotfiles/x/bin/lock &
+redshift -c "${HOME}"/dotfiles/x/redshift &
+feh --bg-fill --randomize "${HOME}"/Downloads/wallpaper/* &
+unclutter -idle 4 -noevents -root &
+xsetroot -cursor_name left_ptr &
+compton --config "${HOME}"/dotfiles/x/compton &
+pulseaudio --start &
+mpd ~/.config/mpd/mpd.conf &
+"$HOME/.sxhkd-dist/bin/sxhkd" -c "$HOME/dotfiles/x/sxhkd" &
+"$HOME/.bspwm-dist/bin/bspwm" -c "$HOME/dotfiles/x/bspwm" &
+"$HOME/.polybar-dist/bin/polybar" example -c "$HOME/dotfiles/x/polybar/config"

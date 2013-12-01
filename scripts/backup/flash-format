@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# @import console/die
+# @import console/info
+# @import lang/required
+# @description format the flash drive
+
+main () {
+    strict  true
+    verbose true
+
+    [[ -d "${HOME}/.sensitive" ]] ||
+    _ die "Nothing to backup."
+
+    # temporary=()
+    label="dotfiles_backup"
+
+    device="$1"
+
+    _ required "${device}" ||
+    _ die "No backup device provided."
+
+    # device="${device::-1}"
+    # device="${device}2"
+
+    [[ -b "${device}" ]] ||
+    _ die "No backup device found."
+
+    # sudo scrub -p dod "${device}"
+    # sudo parted "${device}" --script -- mklabel msdos
+    # parted "${device}" --script -- mkpart primary 0% 100%
+    sudo parted -s -a none "${device}" mklabel gpt
+    sudo parted -s -a none "${device}" mkpart non-fs 0 2
+    sudo parted -s -a none "${device}" mkpart non-fs 2 100%
+    sudo parted -s -a none "${device}" name 2 "${label}"
+
+    sudo partprobe "${device}"
+
+    partition="${device}2"
+
+    [[ -b "${partition}" ]] ||
+    _ die "No backup partition found."
+
+    sudo cryptsetup -y -v luksFormat --verify-passphrase -i 5000 -b 4096 -h PBKDF2-sha512 -h sha512 -c aes-xts-plain64 "${partition}"
+
+    sudo cryptsetup isLuks "${partition}" ||
+    _ die "'${device}' is not a LUKS device."
+
+    sudo cryptsetup open "${partition}" "${label}" 
+
+    [[ -b "/dev/mapper/${label}" ]] ||
+    _ die "No backup device found."
+
+    sudo mkfs.ext3 -q "/dev/mapper/${label}"
+    _ info "Device '/dev/mapper/${label}' formatted."
+}
+
+onExit () {
+    sleep 2
+
+    sudo cryptsetup close "${label}" || true
+    _ info "Device '${partition}' closed."
+}

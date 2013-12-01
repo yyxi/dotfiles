@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# @description backup ~/desktop to backblaze
+# @import console/die
+# @import console/info
+# @import lang/required
+# @import lang/exists
+
+main () {
+    strict  true
+    verbose true
+
+    # export B2_ACCOUNT_ID=<MY_ACCOUNT_ID>
+    # export B2_ACCOUNT_KEY=<MY_SECRET_ACCOUNT_KEY>
+
+    _ required "${B2_ACCOUNT_ID}" "${B2_ACCOUNT_KEY}" ||
+        _ die "set the 'B2_ACCOUNT_ID' and 'B2_ACCOUNT_KEY' environment variables"
+
+    _ exists "${MANAGE_REPOSITORY}/vendor/restic/restic" ||
+        _ die "Download restic first"
+
+    "${MANAGE_REPOSITORY}/vendor/restic/restic" -r b2:stimpy:/ restore latest --target "${HOME}"
+
+    _ info "Done."
+}

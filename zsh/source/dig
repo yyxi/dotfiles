@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+alias dig="dig +nocmd any +multiline +noall +answer"
