@@ -4,7 +4,7 @@
 # source "${HOME}/dotfiles/zsh/source/sxhkd"
 # source "${HOME}/dotfiles/zsh/source/bspwm"
 
-export PATH="$HOME/dotfiles/x/bin:$HOME/.sxhkd-dist/bin:$HOME/.bspwm-dist/bin:$PATH"
+export PATH="$HOME/.redshift-dist/bin:$HOME/dotfiles/x/bin:$HOME/.sxhkd-dist/bin:$HOME/.bspwm-dist/bin:$PATH"
 
 exec > "${HOME}"/.xinitrc.log 2>&1
 echo   "$HOME $UID $SHELL $USER $PATH"
@@ -18,6 +18,7 @@ xsetroot -mod 4 4 -fg gray15 -bg black &
 xset fp+ "${HOME}/.fonts" &
 xset fp rehash &
 xautolock -time 15 -locker "${HOME}"/dotfiles/x/bin/lock &
+brightness 100 &
 redshift -c "${HOME}"/dotfiles/x/redshift &
 feh --bg-fill --randomize "${HOME}"/Downloads/wallpaper/* &
 unclutter -idle 4 -noevents -root &

@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# @description build redshift
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    if [[ -d "${HOME}/.redshift-dist" ]]
+    then
+        rm -rf "${HOME}/.redshift-dist"
+    fi 
+
+    mkdir -p "${HOME}/.redshift-dist/build"
+
+    sudo apt-get install -y --no-install-suggests --no-install-recommends --force-yes \
+    geoclue-2 \
+    autopoint \
+    intltool \
+    libdrm-dev \
+    libglib2.0-dev \
+    libx11-dev \
+    libxcb-randr0-dev \
+    libxcb1-dev \
+    libxxf86vm-dev
+
+    git clone --depth 1 --branch v1.11 --recursive https://github.com/jonls/redshift  "${HOME}/.redshift-dist/build"
+
+    cd "${HOME}/.redshift-dist/build" || exit
+
+    ./bootstrap
+    ./configure --with-systemduserunitdir="${HOME}/.redshift-dist" --prefix="${HOME}/.redshift-dist" --enable-drm --enable-vidmode --enable-randr --enable-geoclue3 --enable-apparmor
+    make -j2 install
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.redshift-dist/build" ]]
+    then
+        rm -rf "${HOME}/.redshift-dist/build"
+    fi
+}
