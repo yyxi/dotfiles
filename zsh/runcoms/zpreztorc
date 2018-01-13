@@ -41,7 +41,8 @@ zstyle ':prezto:load' pmodule \
   'ruby' \
   'history-substring-search' \
   'autosuggestions' \
-  'ssh'
+  'ssh' \
+  'gpg'
 
 #
 # Autosuggestions
