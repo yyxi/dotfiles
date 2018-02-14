@@ -14,17 +14,17 @@ main () {
     if [[ -d "${HOME}/.neovim-dist" ]]
     then
         rm -rf "${HOME}/.neovim-dist"
-    fi 
+    fi
 
     mkdir -p "${HOME}/.neovim-dist/build"
 
     git clone --depth 1 https://github.com/neovim/neovim.git "${HOME}/.neovim-dist/build"
 
     cd "${HOME}/.neovim-dist/build" || exit
-    git fetch origin refs/tags/v0.2.2
+    git fetch origin refs/tags/nightly
     git reset --hard FETCH_HEAD
 
-    make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${HOME}/.neovim-dist"
+    make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${HOME}/.neovim-dist"
     make install
 
     _ info "Done."
@@ -36,5 +36,5 @@ onExit () {
     if [[ -d "${HOME}/.neovim-dist/build" ]]
     then
         rm -rf "${HOME}/.neovim-dist/build"
-    fi 
+    fi
 }
