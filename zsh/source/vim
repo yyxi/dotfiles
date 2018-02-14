@@ -1,4 +1,12 @@
 #!/usr/bin/env sh
 
 [ -d "$HOME/.vim-dist/bin/" ] && export PATH="$HOME/.vim-dist/bin:$PATH"
-alias vi='vim'
+[ -d "$HOME/.neovim-dist/bin/" ] && export PATH="$HOME/.neovim-dist/bin:$PATH"
+
+if command -v nvim > /dev/null 2>&1
+then
+    alias vi='nvim'
+    alias vim='nvim'
+else
+    alias vi='vim'
+fi

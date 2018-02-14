@@ -55,7 +55,7 @@ main () {
     git clone --depth 1 https://github.com/vim/vim.git "${HOME}/.vim-dist/build"
 
     cd "${HOME}/.vim-dist/build" || exit
-    git fetch origin refs/tags/v8.0.1322
+    git fetch origin refs/tags/v8.0.1438
     git reset --hard FETCH_HEAD
     make distclean
 
@@ -63,7 +63,7 @@ main () {
     # --with-python-config-dir="$HOME/.pyenv/versions/2.7.11/lib/python2.7/config" \
     "${HOME}/.vim-dist/build/configure" --with-features=huge \
             --enable-multibyte \
-            --enable-pythoninterp \
+            --enable-python3interp \
             --enable-luainterp=yes \
             --enable-fontset \
             --enable-gui=no \

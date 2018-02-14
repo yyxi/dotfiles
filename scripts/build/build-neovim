@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# @description build vim text editor
+#
+# @import console/info
+# @dependency git
+
+main () {
+    strict  true
+    verbose true
+
+    # sudo apt-get install ninja-build libtool libtool-bin autoconf automake cmake g++ pkg-config unzip
+    # sudo yum -y install ninja-build libtool autoconf automake cmake gcc gcc-c++ make pkgconfig unzip
+
+    if [[ -d "${HOME}/.neovim-dist" ]]
+    then
+        rm -rf "${HOME}/.neovim-dist"
+    fi 
+
+    mkdir -p "${HOME}/.neovim-dist/build"
+
+    git clone --depth 1 https://github.com/neovim/neovim.git "${HOME}/.neovim-dist/build"
+
+    cd "${HOME}/.neovim-dist/build" || exit
+    git fetch origin refs/tags/v0.2.2
+    git reset --hard FETCH_HEAD
+
+    make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${HOME}/.neovim-dist"
+    make install
+
+    _ info "Done."
+}
+
+onExit () {
+    _ info "Removing temporary files and directories."
+
+    if [[ -d "${HOME}/.neovim-dist/build" ]]
+    then
+        rm -rf "${HOME}/.neovim-dist/build"
+    fi 
+}
