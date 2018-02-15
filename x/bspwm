@@ -11,7 +11,7 @@ bspc config focused_frame_opacity           0.2
 bspc config borderless_monocle              false
 bspc config gapless_monocle                 false
 bspc config focus_by_distance               true
-bspc config focus_follows_pointer           false
+bspc config focus_follows_pointer           true
 bspc config auto_alternate                  true
 bspc config auto_cancel                     true
 bspc config apply_floating_atom             true
@@ -24,5 +24,11 @@ bspc config urgent_border_color             "#9f7155"
 bspc config focused_locked_border_color     "#9a875f"
 bspc config top_padding 28
 bspc config bottom_padding 2
-bspc config focus_follows_pointer true
+
+bspc config pointer_follows_focus           false
+bspc config pointer_modifier                mod4
+bspc config pointer_action1 move
+bspc config pointer_action2 resize_side
+bspc config pointer_action3 resize_corner
+
 

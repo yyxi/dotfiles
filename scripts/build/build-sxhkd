@@ -19,7 +19,7 @@ main () {
     git clone --depth 1 https://github.com/baskerville/sxhkd.git  "${HOME}/.sxhkd-dist/build"
 
     cd "${HOME}/.sxhkd-dist/build" || exit
-    git fetch origin refs/tags/0.5.6
+    git fetch origin refs/tags/0.5.8
     git reset --hard FETCH_HEAD
 
     PREFIX="${HOME}/.sxhkd-dist" make -j 2

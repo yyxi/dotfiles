@@ -8,6 +8,8 @@ main () {
     strict  true
     verbose true
 
+    # sudo apt-get install xcb libxcb-util0-dev libxcb-ewmh-dev libxcb-randr0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-xinerama0-dev libasound2-dev libxcb-xtest0-dev
+
     if [[ -d "${HOME}/.xutils-dist" ]]
     then
         rm -rf "${HOME}/.xutils-dist"
@@ -43,7 +45,19 @@ main () {
         rm -rf "${HOME}/.xutils-dist/build"
     fi
 
-    git clone --depth 1 https://github.com/krypt-n/bar.git  "${HOME}/.xutils-dist/build"
+    # git clone --depth 1 https://github.com/krypt-n/bar.git  "${HOME}/.xutils-dist/build"
+    #
+    # cd "${HOME}/.xutils-dist/build" || exit
+    #
+    # PREFIX="${HOME}/.xutils-dist" make
+    # PREFIX="${HOME}/.xutils-dist" make install
+    #
+    # if [[ -d "${HOME}/.xutils-dist/build" ]]
+    # then
+    #     rm -rf "${HOME}/.xutils-dist/build"
+    # fi
+
+    git clone --depth 1 https://github.com/baskerville/xdo.git  "${HOME}/.xutils-dist/build"
 
     cd "${HOME}/.xutils-dist/build" || exit
 

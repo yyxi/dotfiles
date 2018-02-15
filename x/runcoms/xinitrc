@@ -10,9 +10,8 @@ exec > "${HOME}"/.xinitrc.log 2>&1
 echo   "$HOME $UID $SHELL $USER $PATH"
 
 setres 1536 864
-# setres 1366 768 &
 xmodmap "${HOME}/dotfiles/x/xmodmap" &
-xbindkeys -f "${HOME}/dotfiles/x/xbindkeys" &
+xbindkeys &
 xrdb -I"${HOME}" "${HOME}"/dotfiles/x/xresources &
 xsetroot -mod 4 4 -fg gray15 -bg black &
 xset fp+ "${HOME}/.fonts" &

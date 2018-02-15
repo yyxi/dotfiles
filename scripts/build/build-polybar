@@ -34,7 +34,7 @@ main () {
     # python-xcbgen \
     # xcb-proto
 
-    git clone --depth 1 --branch 3.0.5 --recursive https://github.com/jaagr/polybar  "${HOME}/.polybar-dist/build"
+    git clone --depth 1 --branch 3.1.0 --recursive https://github.com/jaagr/polybar  "${HOME}/.polybar-dist/build"
 
     cd "${HOME}/.polybar-dist/build" || exit
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH="${HOME}/.polybar-dist"
