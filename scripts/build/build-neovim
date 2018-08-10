@@ -21,7 +21,7 @@ main () {
     git clone --depth 1 https://github.com/neovim/neovim.git "${HOME}/.neovim-dist/build"
 
     cd "${HOME}/.neovim-dist/build" || exit
-    git fetch origin refs/tags/nightly
+    git fetch origin refs/tags/v0.3.1
     git reset --hard FETCH_HEAD
 
     make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${HOME}/.neovim-dist"
