@@ -6,6 +6,7 @@ directories:
 # Enable manage repository scripts
 enable:
   - help
+  - trust-escapace
 
 # Environment variables
 env:

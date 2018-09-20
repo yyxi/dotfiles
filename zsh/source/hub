@@ -1,4 +1,7 @@
 # shellcheck disable=SC1090
 
-[ -d "$HOME/.hub-dist/bin/" ] && export PATH="$HOME/.hub-dist/bin:$PATH" && eval "$(hub alias -s)"
+if command -v hub > /dev/null 2>&1
+then
+    eval "$(hub alias -s)"
+fi
 

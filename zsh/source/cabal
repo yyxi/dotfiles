@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-[ -d "$HOME/.cabal/bin/" ] && export PATH="$HOME/.cabal/bin:$PATH"

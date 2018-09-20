@@ -20,10 +20,6 @@ export TERM="xterm-256color"
 
 export PATH=$HOME/dotfiles/bin:$HOME/.local/bin:$PATH
 
-if [[ -z "`tty | grep "pts"`" ]]; then
-    export ISCONSOLE="YES"
-fi
-
 bindkey -M vicmd "v" edit-command-line
 
 for f in $HOME/dotfiles/zsh/source/*; do

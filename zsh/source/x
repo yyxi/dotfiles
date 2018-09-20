@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-
-if [ -d $HOME/dotfiles/x/bin ]; then
-    export PATH="$HOME/dotfiles/x/bin:$PATH"
-fi

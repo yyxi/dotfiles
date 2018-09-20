@@ -1,7 +1,0 @@
-!xterm*metaSendsEscape: true
-xterm*faceName: Hack
-xterm*faceSize: 11
-xterm*utf8: 1
-xterm*selectToClipboard: true
-xterm*internalBorder: 1
-xterm*termName: xterm-256color

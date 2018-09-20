@@ -9,5 +9,3 @@ script:
 - ln -s $(pwd) ~/dotfiles
 - "~/dotfiles/manage install"
 - "~/dotfiles/manage clean"
-- "~/dotfiles/manage x-install"
-- "~/dotfiles/manage x-clean"
