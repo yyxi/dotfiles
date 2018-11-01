@@ -1,8 +1,3 @@
-directories:
-  script: scripts
-  module: scripts/modules
-  test: scripts/tests
-
 # Enable manage repository scripts
 enable:
   - help

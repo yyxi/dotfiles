@@ -7,9 +7,6 @@
 [submodule "vendor/prezto"]
         path = vendor/prezto
         url = https://github.com/sorin-ionescu/prezto.git
-[submodule "vendor/manage"]
-        path = vendor/manage
-        url = https://github.com/escapace/manage.git
 [submodule "vendor/fzf"]
         path = vendor/fzf
         url = https://github.com/junegunn/fzf.git
