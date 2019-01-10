@@ -1,0 +1,15 @@
+node_modules
+.manage_modules
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bower_components
+jspm_packages
+__pycache__
+*.py[cod]
+*$py.class
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache
+.venv

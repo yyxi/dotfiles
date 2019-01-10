@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# @description backup to restic repository
+# @import console/die
+# @import console/info
+# @import console/warn
+# @import lang/required
+# @import string/kebabCase
+# @import github.com/escapace/stack-tools ncw/downloadRclone
+# @import github.com/escapace/stack-tools restic/downloadRestic
+
+main () {
+    strict  true
+    verbose true
+
+    local sourcePath
+
+    if _ required "${1}"
+    then
+        RESTIC_SOURCE_PATH="${1}"
+    fi
+
+    _ required "${RESTIC_SOURCE_PATH}" || _ die "RESTIC_SOURCE_PATH not specified"
+
+    sourcePath="$(_ kebabCase "${RESTIC_SOURCE_PATH}")"
+
+    RESTIC_TARGET="${RESTIC_TARGET:-${HOME}/.restic/${sourcePath}}/data"
+    RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-${HOME}/.restic/${sourcePath}}/repository"
+
+    _ downloadRestic
+    _ downloadRclone
+
+    mkdir -p "$(dirname "${RESTIC_REPOSITORY}")" "${RESTIC_TARGET}"
+
+    if [[ ! -d "${RESTIC_TARGET}" ]]
+    then
+        _ die "Nothing to backup"
+    fi
+
+    if [[ ! -d "${RESTIC_REPOSITORY}" ]]
+    then
+        "${MANAGE_REPOSITORY}/vendor/restic/restic" init -r "${RESTIC_REPOSITORY}" || {
+            rm -rf "${RESTIC_REPOSITORY}"
+            _ die "Failed to initialize restic repository"
+        }
+
+        _ info "Initialized empty restic respository"
+    fi
+
+    if [ -z "$(ls -A "${RESTIC_TARGET}")" ]
+    then
+        _ warn "${RESTIC_TARGET}: Directory is empty"
+        exit 0
+    fi
+
+    [[ -d "${RESTIC_REPOSITORY}" ]] || _ die "${RESTIC_REPOSITORY}: No such file or directory"
+
+    (
+        cd "${RESTIC_TARGET}" || _ die
+
+        "${MANAGE_REPOSITORY}/vendor/restic/restic" backup \
+            --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \
+            -r "${RESTIC_REPOSITORY}" .
+    )
+
+    "${MANAGE_REPOSITORY}/vendor/rclone/rclone" sync --progress "${RESTIC_REPOSITORY}" "${RESTIC_SOURCE_PATH}"
+
+    _ info "Done."
+}
