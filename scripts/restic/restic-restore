@@ -4,8 +4,7 @@
 # @import console/info
 # @import lang/required
 # @import string/kebabCase
-# @import github.com/escapace/stack-tools ncw/downloadRclone
-# @import github.com/escapace/stack-tools restic/downloadRestic
+# @import github.com/escapace/stack-tools rclone/rclone restic/restic
 
 main () {
     strict  true
@@ -30,11 +29,11 @@ main () {
 
     mkdir -p "$(dirname "${RESTIC_REPOSITORY}")"
 
-    "${MANAGE_REPOSITORY}/vendor/rclone/rclone" sync --progress "${RESTIC_SOURCE_PATH}" "${RESTIC_REPOSITORY}"
+    _ rclone sync --progress "${RESTIC_SOURCE_PATH}" "${RESTIC_REPOSITORY}"
 
     mkdir -p "$(dirname "${RESTIC_TARGET}")" "${RESTIC_REPOSITORY}/tmp" "${RESTIC_REPOSITORY}/locks"
 
-    "${MANAGE_REPOSITORY}/vendor/restic/restic" -r "${RESTIC_REPOSITORY}" restore latest --target "${RESTIC_TARGET}"
+    _ restic -r "${RESTIC_REPOSITORY}" restore latest --target "${RESTIC_TARGET}"
 
     _ info "Done."
 }

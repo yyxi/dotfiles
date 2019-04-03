@@ -6,8 +6,7 @@
 # @import console/warn
 # @import lang/required
 # @import string/kebabCase
-# @import github.com/escapace/stack-tools ncw/downloadRclone
-# @import github.com/escapace/stack-tools restic/downloadRestic
+# @import github.com/escapace/stack-tools rclone/rclone restic/restic
 
 main () {
     strict  true
@@ -27,9 +26,6 @@ main () {
     RESTIC_TARGET="${RESTIC_TARGET:-${HOME}/.restic/${sourcePath}}/data"
     RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-${HOME}/.restic/${sourcePath}}/repository"
 
-    _ downloadRestic
-    _ downloadRclone
-
     mkdir -p "$(dirname "${RESTIC_REPOSITORY}")" "${RESTIC_TARGET}"
 
     if [[ ! -d "${RESTIC_TARGET}" ]]
@@ -39,7 +35,7 @@ main () {
 
     if [[ ! -d "${RESTIC_REPOSITORY}" ]]
     then
-        "${MANAGE_REPOSITORY}/vendor/restic/restic" init -r "${RESTIC_REPOSITORY}" || {
+        _ restic init -r "${RESTIC_REPOSITORY}" || {
             rm -rf "${RESTIC_REPOSITORY}"
             _ die "Failed to initialize restic repository"
         }
@@ -58,12 +54,12 @@ main () {
     (
         cd "${RESTIC_TARGET}" || _ die
 
-        "${MANAGE_REPOSITORY}/vendor/restic/restic" backup \
+        _ restic backup \
             --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \
             -r "${RESTIC_REPOSITORY}" .
     )
 
-    "${MANAGE_REPOSITORY}/vendor/rclone/rclone" sync --progress "${RESTIC_REPOSITORY}" "${RESTIC_SOURCE_PATH}"
+    _ rclone sync --progress "${RESTIC_REPOSITORY}" "${RESTIC_SOURCE_PATH}"
 
     _ info "Done."
 }
