@@ -1,39 +1,20 @@
 #!/usr/bin/env bash
 # @description restore from restic repository
 # @import console/die
-# @import console/info
 # @import lang/required
-# @import string/kebabCase
-# @import github.com/escapace/stack-tools rclone/rclone restic/restic
+# @import github.com/escapace/stack-tools  restic/restic
 
 main () {
     strict  true
     verbose true
 
-    local sourcePath
+    _ required "${B2_ACCOUNT_ID}"  || _ die "B2_ACCOUNT_ID environment variable not set"
+    _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
+    _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
 
-    if _ required "${1}"
-    then
-        RESTIC_SOURCE_PATH="${1}"
-    fi
-
-    _ required "${RESTIC_SOURCE_PATH}" || _ die "RESTIC_SOURCE_PATH not specified"
-
-    sourcePath="$(_ kebabCase "${RESTIC_SOURCE_PATH}")"
-
-    RESTIC_TARGET="${RESTIC_TARGET:-${HOME}/.restic/${sourcePath}}/data"
-    RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-${HOME}/.restic/${sourcePath}}/repository"
-
-    _ downloadRclone
-    _ downloadRestic
-
-    mkdir -p "$(dirname "${RESTIC_REPOSITORY}")"
-
-    _ rclone sync --progress "${RESTIC_SOURCE_PATH}" "${RESTIC_REPOSITORY}"
-
-    mkdir -p "$(dirname "${RESTIC_TARGET}")" "${RESTIC_REPOSITORY}/tmp" "${RESTIC_REPOSITORY}/locks"
-
-    _ restic -r "${RESTIC_REPOSITORY}" restore latest --target "${RESTIC_TARGET}"
-
-    _ info "Done."
+    _ restic restore \
+        -r b2:"${B2_BUCKET_NAME}":/ latest \
+        -o b2.connections=50 \
+        --target "${HOME}/devel"
+        
 }

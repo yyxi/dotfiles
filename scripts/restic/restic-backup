@@ -1,65 +1,19 @@
 #!/usr/bin/env bash
-#
 # @description backup to restic repository
 # @import console/die
-# @import console/info
-# @import console/warn
 # @import lang/required
-# @import string/kebabCase
-# @import github.com/escapace/stack-tools rclone/rclone restic/restic
+# @import github.com/escapace/stack-tools restic/restic
 
 main () {
     strict  true
     verbose true
 
-    local sourcePath
+    _ required "${B2_ACCOUNT_ID}"  || _ die "B2_ACCOUNT_ID environment variable not set"
+    _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
+    _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
 
-    if _ required "${1}"
-    then
-        RESTIC_SOURCE_PATH="${1}"
-    fi
-
-    _ required "${RESTIC_SOURCE_PATH}" || _ die "RESTIC_SOURCE_PATH not specified"
-
-    sourcePath="$(_ kebabCase "${RESTIC_SOURCE_PATH}")"
-
-    RESTIC_TARGET="${RESTIC_TARGET:-${HOME}/.restic/${sourcePath}}/data"
-    RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-${HOME}/.restic/${sourcePath}}/repository"
-
-    mkdir -p "$(dirname "${RESTIC_REPOSITORY}")" "${RESTIC_TARGET}"
-
-    if [[ ! -d "${RESTIC_TARGET}" ]]
-    then
-        _ die "Nothing to backup"
-    fi
-
-    if [[ ! -d "${RESTIC_REPOSITORY}" ]]
-    then
-        _ restic init -r "${RESTIC_REPOSITORY}" || {
-            rm -rf "${RESTIC_REPOSITORY}"
-            _ die "Failed to initialize restic repository"
-        }
-
-        _ info "Initialized empty restic respository"
-    fi
-
-    if [ -z "$(ls -A "${RESTIC_TARGET}")" ]
-    then
-        _ warn "${RESTIC_TARGET}: Directory is empty"
-        exit 0
-    fi
-
-    [[ -d "${RESTIC_REPOSITORY}" ]] || _ die "${RESTIC_REPOSITORY}: No such file or directory"
-
-    (
-        cd "${RESTIC_TARGET}" || _ die
-
-        _ restic backup \
-            --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \
-            -r "${RESTIC_REPOSITORY}" .
-    )
-
-    _ rclone sync --progress "${RESTIC_REPOSITORY}" "${RESTIC_SOURCE_PATH}"
-
-    _ info "Done."
+    _ restic backup \
+        --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \
+        -o b2.connections=50 \
+        -r b2:"${B2_BUCKET_NAME}":/ "${HOME}/devel"
 }

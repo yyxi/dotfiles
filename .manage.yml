@@ -5,3 +5,5 @@ enable:
 
 # Default script
 default: help
+env:
+  RESTIC_VERSION: 0.9.5
