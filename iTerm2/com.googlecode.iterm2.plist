@@ -8,6 +8,8 @@
 	<false/>
 	<key>AppleAntiAliasingThreshold</key>
 	<integer>1</integer>
+	<key>ApplePressAndHoldEnabled</key>
+	<false/>
 	<key>AppleScrollAnimationEnabled</key>
 	<integer>0</integer>
 	<key>AppleSmoothFixedFontsSizeThreshold</key>
@@ -778,8 +780,10 @@
 	</dict>
 	<key>NSWindow Frame NSFontPanel</key>
 	<string>367 325 629 77 0 0 1280 800 </string>
+	<key>NSWindow Frame SUAutomaticUpdateAlert</key>
+	<string>332 469 616 174 0 0 1280 800 </string>
 	<key>NSWindow Frame SUStatusFrame</key>
-	<string>158 473 400 129 0 0 1280 800 </string>
+	<string>440 503 400 129 0 0 1280 800 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
 	<string>330 306 620 392 0 0 1280 800 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
@@ -789,7 +793,7 @@
 	<key>NSWindow Frame com.apple.typography_panel_SFMono-Semibold</key>
 	<string>212 483 260 46 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>0 0 1280 800 0 0 1280 800 </string>
+	<string>0 4 1280 784 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>0 208 885 589 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 2</key>
@@ -1127,6 +1131,8 @@
 			<string>Default</string>
 			<key>Disable Window Resizing</key>
 			<true/>
+			<key>Draw Powerline Glyphs</key>
+			<false/>
 			<key>Flashing Bell</key>
 			<false/>
 			<key>Foreground Color</key>
@@ -1616,15 +1622,17 @@
 			<key>Terminal Type</key>
 			<string>xterm-256color</string>
 			<key>Thin Strokes</key>
-			<integer>4</integer>
+			<integer>3</integer>
 			<key>Transparency</key>
 			<real>0.0</real>
 			<key>Unicode Normalization</key>
 			<integer>0</integer>
+			<key>Unicode Version</key>
+			<integer>9</integer>
 			<key>Unlimited Scrollback</key>
 			<true/>
 			<key>Use Bold Font</key>
-			<true/>
+			<false/>
 			<key>Use Bright Bold</key>
 			<true/>
 			<key>Use Italic Font</key>
@@ -1644,21 +1652,36 @@
 	<key>NoSyncAllAppVersions</key>
 	<array>
 		<string>3.3.20190623-nightly</string>
+		<string>3.3.20191023-nightly</string>
+		<string>3.3.20190808-nightly</string>
+		<string>3.3.20200122-nightly</string>
+		<string>3.3.20190809-nightly</string>
+		<string>3.3.20190626-nightly</string>
 		<string>3.3.20190617-nightly</string>
 		<string>3.3.20190721-nightly</string>
+		<string>3.3.20191110-nightly</string>
+		<string>3.3.20191121-nightly</string>
+		<string>3.3.20200127-nightly</string>
+		<string>3.3.20200129-nightly</string>
+		<string>3.3.20191112-nightly</string>
+		<string>3.3.20190724-nightly</string>
+		<string>3.3.20200111-nightly</string>
+		<string>3.3.20200112-nightly</string>
+		<string>3.3.20191004-nightly</string>
+		<string>3.3.20190606-nightly</string>
+		<string>3.3.20191106-nightly</string>
+		<string>3.3.20191117-nightly</string>
+		<string>3.3.20191220-nightly</string>
+		<string>3.3.20200105-nightly</string>
 		<string>3.3.20190912-nightly</string>
 		<string>3.3.20190812-nightly</string>
-		<string>3.3.20190806-nightly</string>
-		<string>3.3.20190626-nightly</string>
-		<string>3.3.20191004-nightly</string>
-		<string>3.3.20190808-nightly</string>
-		<string>3.3.20190724-nightly</string>
-		<string>3.3.20190809-nightly</string>
-		<string>3.3.20191023-nightly</string>
-		<string>3.3.20191104-nightly</string>
-		<string>3.3.20191106-nightly</string>
 		<string>3.3.20190802-nightly</string>
-		<string>3.3.20190606-nightly</string>
+		<string>3.3.20191104-nightly</string>
+		<string>3.3.20190806-nightly</string>
+	</array>
+	<key>NoSyncBFPRecents</key>
+	<array>
+		<string>SF Mono</string>
 	</array>
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
@@ -1678,7 +1701,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>73B23491-13D2-43FF-805C-C545A138F0D1</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>259</integer>
+	<integer>354</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -2453,6 +2476,10 @@
 	</dict>
 	<key>NoSyncTimeOfFirstLaunchOfVersionWithTip</key>
 	<real>559092458.32540298</real>
+	<key>NoSyncVeryOldNightlyBuildWarning_SilenceUntil</key>
+	<real>601241290.83385801</real>
+	<key>NoSyncVeryOldNightlyBuildWarning_selection</key>
+	<integer>1</integer>
 	<key>OpenArrangementAtStartup</key>
 	<true/>
 	<key>OpenBookmark</key>
@@ -2517,7 +2544,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2019-11-07T20:08:44Z</date>
+	<date>2020-02-14T19:32:32Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
@@ -3437,7 +3464,7 @@
 	<key>disableMetalWhenUnplugged</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.3.20191106-nightly</string>
+	<string>3.3.20200129-nightly</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
