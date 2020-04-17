@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC1090
 
+export FZF_DEFAULT_OPTS='--color bw'
+
 if [[ -d "$HOME/dotfiles/vendor/fzf/bin" ]]
 then
     export PATH="$PATH:$HOME/dotfiles/vendor/fzf/bin"
