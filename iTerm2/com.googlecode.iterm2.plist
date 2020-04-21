@@ -811,9 +811,9 @@
 	<key>NSWindow Frame com.apple.typography_panel_SFMono-Semibold</key>
 	<string>212 483 260 46 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>0 346 570 454 0 0 1280 800 </string>
+	<string>0 0 1280 800 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
-	<string>0 208 885 589 0 0 1280 800 </string>
+	<string>0 303 650 479 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 2</key>
 	<string>173 32 650 427 0 0 1280 800 </string>
 	<key>NSWindow Frame iTerm Window 3</key>
@@ -1490,7 +1490,7 @@
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>Iosevka-Type-Slab-Medium 14</string>
+			<string>Iosevka-Type-Medium 15</string>
 			<key>Option Key Sends</key>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
@@ -2594,7 +2594,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-04-18T18:09:52Z</date>
+	<date>2020-04-21T00:32:27Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
@@ -3526,6 +3526,6 @@
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
 	<false/>
 	<key>metalMaximizeThroughput</key>
-	<true/>
+	<false/>
 </dict>
 </plist>
