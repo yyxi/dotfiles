@@ -1488,7 +1488,7 @@
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>Iosevka-Type-Semibold 15</string>
+			<string>Iosevka-Semibold 15</string>
 			<key>Option Key Sends</key>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
@@ -1719,9 +1719,8 @@
 	</array>
 	<key>NoSyncBFPRecents</key>
 	<array>
-		<string>IosevkaCC</string>
+		<string>Iosevka</string>
 		<string>Iosevka Term Slab</string>
-		<string>Iosevka Type</string>
 		<string>Iosevka Type Slab</string>
 	</array>
 	<key>NoSyncFrame_SessionsPreferences</key>
@@ -1749,7 +1748,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>73B23491-13D2-43FF-805C-C545A138F0D1</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>473</integer>
+	<integer>506</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -2103,6 +2102,14 @@
 				<true/>
 				<key>name</key>
 				<string>style</string>
+				<key>nonterminalContext</key>
+				<integer>0</integer>
+			</dict>
+			<dict>
+				<key>isTerminal</key>
+				<true/>
+				<key>name</key>
+				<string>currentTab.currentSession.jobPid</string>
 				<key>nonterminalContext</key>
 				<integer>0</integer>
 			</dict>
@@ -2594,7 +2601,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-08-28T16:57:12Z</date>
+	<date>2020-10-28T18:13:20Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
