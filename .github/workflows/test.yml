@@ -1,0 +1,32 @@
+name: Test
+on:
+  push:
+    branches:
+      - trunk
+      - whitelabel
+  pull_request:
+    branches:
+      - trunk
+      - whitelabel
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Dependencies
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+               sudo apt-get install zsh bc
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+               brew install bash zsh bc gnu-sed
+          fi
+      - name: Test
+        run: |
+          ln -s $(pwd) ~/dotfiles
+          ~/dotfiles/manage install
+          ~/dotfiles/manage clean

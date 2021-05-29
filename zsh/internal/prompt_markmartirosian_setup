@@ -2,8 +2,8 @@
 # A simple theme that displays relevant, contextual information.
 #
 # Authors:
-#   Sorin Ionescu <l5x.ionescu@gmail.com>
-#   l5x
+#   Mark Martirosian
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 # Screenshots:
 #   http://i.imgur.com/nrGV6pg.png
@@ -33,15 +33,15 @@
 # Load dependencies.
 pmodload 'helper'
 
-function prompt_l5x_precmd {
+function prompt_markmartirosian_precmd {
   setopt LOCAL_OPTIONS
   unsetopt XTRACE KSH_ARRAYS
 
   # Format PWD.
-  _prompt_l5x_pwd=$(prompt-pwd)
+  _prompt_markmartirosian_pwd=$(prompt-pwd)
 }
 
-function prompt_l5x_setup {
+function prompt_markmartirosian_setup {
   setopt LOCAL_OPTIONS
   unsetopt XTRACE KSH_ARRAYS
   prompt_opts=(cr percent sp subst)
@@ -50,7 +50,7 @@ function prompt_l5x_setup {
   autoload -Uz add-zsh-hook
 
   # Add hook for calling git-info before each command.
-  add-zsh-hook precmd prompt_l5x_precmd
+  add-zsh-hook precmd prompt_markmartirosian_precmd
 
   # Tell prezto we can manage this prompt
   zstyle ':prezto:module:prompt' managed 'yes'
@@ -61,25 +61,25 @@ function prompt_l5x_setup {
   zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format ' %F{default}¿%f'
   zstyle ':prezto:module:editor:info:keymap:alternate' format ' %B%F{default}❮%f%b'
 
-  # _prompt_l5x_git=''
-  _prompt_l5x_pwd=''
+  # _prompt_markmartirosian_git=''
+  _prompt_markmartirosian_pwd=''
 
   # Define prompts.
-  PROMPT='${SSH_TTY:+"%F{default}%n%f%F{default}@%f%F{default}%m%f "}%F{default}${_prompt_l5x_pwd}%(!. %B%F{default}#%f%b.)${editor_info[keymap]} '
+  PROMPT='${SSH_TTY:+"%F{default}%n%f%F{default}@%f%F{default}%m%f "}%F{default}${_prompt_markmartirosian_pwd}%(!. %B%F{default}#%f%b.)${editor_info[keymap]} '
   RPROMPT='${editor_info[overwrite]}%(?:: %F{default}'
   RPROMPT+=${show_return}
   RPROMPT+='%f)${VIM:+" %B%F{default}V%f%b"}'
   SPROMPT='zsh: correct %F{default}%R%f to %F{default}%r%f [nyae]? '
 }
 
-function prompt_l5x_preview {
+function prompt_markmartirosian_preview {
   local +h PROMPT=''
   local +h RPROMPT=''
   local +h SPROMPT=''
 
   editor-info 2> /dev/null
-  prompt_preview_theme 'l5x'
+  prompt_preview_theme 'markmartirosian'
 }
 
-prompt_l5x_setup "$@"
+prompt_markmartirosian_setup "$@"
 # vim: ft=zsh
