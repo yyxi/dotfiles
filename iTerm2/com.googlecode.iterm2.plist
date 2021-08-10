@@ -6,6 +6,8 @@
 	<true/>
 	<key>AlternateMouseScroll</key>
 	<false/>
+	<key>AnimateGraphStatusBarComponents</key>
+	<false/>
 	<key>BadgeMaxHeightFraction</key>
 	<real>0.0</real>
 	<key>BadgeMaxWidthFraction</key>
