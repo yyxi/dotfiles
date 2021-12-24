@@ -15,7 +15,7 @@ main () {
         local path
         path="$HOME/dotfiles"
         local OPWD=$PWD ; cd "${path}" || exit
-        git submodule update --init --recursive
+        # git submodule update --init --recursive
         _ runcoms install "${HOME}"/dotfiles/zsh/runcoms
         cd "${HOME}/dotfiles/vendor/fzf" && "${HOME}/dotfiles/vendor/fzf/install" --bin
         cd "${OPWD}" || exit

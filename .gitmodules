@@ -1,6 +1,3 @@
-[submodule "vendor/spark"]
-        path = vendor/spark
-        url = https://github.com/holman/spark.git
 [submodule "vendor/fasd"]
         path = vendor/fasd
         url = https://github.com/clvv/fasd.git

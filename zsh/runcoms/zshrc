@@ -6,9 +6,7 @@
 #
 
 fpath=("$HOME/dotfiles/zsh/internal" "${fpath[@]}")
-autoload -U compinit && compinit
 
-# Source Prezto.
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
@@ -18,13 +16,9 @@ fi
 umask 0027
 export TERM="xterm-256color"
 
-export PATH=$HOME/dotfiles/bin:$HOME/.local/bin:$PATH
-
-bindkey -M vicmd "v" edit-command-line
-
-for f in $HOME/dotfiles/zsh/source/*; do
-    if [[ -f $f ]]
+for file in $HOME/dotfiles/zsh/source/*; do
+    if [[ -f "${file}" ]]
     then
-        . $f
+        source "${file}"
     fi
 done

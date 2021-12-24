@@ -28,21 +28,19 @@ zstyle ':prezto:load' pmodule \
   'terminal' \
   'editor' \
   'history' \
-  'directory' \
   'spectrum' \
   'gnu-utility' \
   'utility' \
-  'completion' \
-  'prompt' \
   'archive' \
-  'git' \
-  'node' \
+  'ssh' \
+  'gpg' \
   'python' \
-  'ruby' \
+  'node' \
+  'completion' \
+  'syntax-highlighting' \
   'history-substring-search' \
   'autosuggestions' \
-  'ssh' \
-  'gpg'
+  'prompt'
 
 #
 # Autosuggestions
@@ -51,7 +49,7 @@ zstyle ':prezto:load' pmodule \
 zstyle ':prezto:module:autosuggestions' color 'yes'
 
 # Set the query found color.
-zstyle ':prezto:module:autosuggestions:color' found 'underline'
+zstyle ':prezto:module:autosuggestions:color' found 'fg=238,faint'
 
 #
 # Editor
@@ -62,13 +60,6 @@ zstyle ':prezto:module:editor' key-bindings 'vi'
 
 # Auto convert .... to ../..
 zstyle ':prezto:module:editor' dot-expansion 'yes'
-
-#
-# Git
-#
-
-# Ignore submodules when they are 'dirty', 'untracked', 'all', or 'none'.
-# zstyle ':prezto:module:git:status:ignore' submodules 'all'
 
 #
 # GNU Utility
@@ -82,20 +73,13 @@ zstyle ':prezto:module:editor' dot-expansion 'yes'
 #
 
 # Set the query found color.
-zstyle ':prezto:module:history-substring-search:color' found 'underline'
+zstyle ':prezto:module:history-substring-search:color' found 'bold'
 
 # Set the query not found color.
 zstyle ':prezto:module:history-substring-search:color' not-found 'bold'
 
 # Set the search globbing flags.
 # zstyle ':prezto:module:history-substring-search' globbing-flags ''
-
-#
-# Pacman
-#
-
-# Set the Pacman frontend.
-# zstyle ':prezto:module:pacman' frontend 'yaourt'
 
 #
 # Prompt
@@ -114,16 +98,6 @@ zstyle ':prezto:module:prompt' theme 'markmartirosian'
 # zstyle ':prezto:module:ruby:chruby' auto-switch 'yes'
 
 #
-# Screen
-#
-
-# Auto start a session when Zsh is launched in a local terminal.
-# zstyle ':prezto:module:screen:auto-start' local 'yes'
-
-# Auto start a session when Zsh is launched in a SSH connection.
-# zstyle ':prezto:module:screen:auto-start' remote 'yes'
-
-#
 # SSH
 #
 
@@ -134,17 +108,15 @@ zstyle ':prezto:module:ssh:load' identities 'id_rsa'
 # Syntax Highlighting
 #
 
-# Set syntax highlighters.
-# By default, only the main highlighter is enabled.
-# zstyle ':prezto:module:syntax-highlighting' highlighters \
-#   'main' \
-#   'brackets' \
-#   'pattern' \
-#   'line' \
-#   'cursor' \
-#   'root'
-#
+zstyle ':prezto:module:syntax-highlighting' highlighters \
+  'brackets' \
+  'pattern' \
+  'line' \
+  'cursor' \
+  'root'
+
 # Set syntax highlighting styles.
+#
 # zstyle ':prezto:module:syntax-highlighting' styles \
 #   'builtin' 'bg=blue' \
 #   'command' 'bg=blue' \

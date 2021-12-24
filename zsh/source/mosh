@@ -1,1 +1,0 @@
-[ -d "$HOME/.mosh-dist/bin/" ] && export PATH="$HOME/.mosh-dist/bin:$PATH"
