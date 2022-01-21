@@ -22,3 +22,6 @@ for file in $HOME/dotfiles/zsh/source/*; do
         source "${file}"
     fi
 done
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /usr/local/bin/nomad nomad

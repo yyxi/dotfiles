@@ -1,4 +1,0 @@
-# BSD.
-export GREP_COLOR='7'
-# GNU
-export GREP_COLORS="mt=$GREP_COLOR"

@@ -19,6 +19,8 @@ main () {
         _ runcoms install "${HOME}"/dotfiles/zsh/runcoms
         cd "${HOME}/dotfiles/vendor/fzf" && "${HOME}/dotfiles/vendor/fzf/install" --bin
         cd "${OPWD}" || exit
+
+        _ manage install-svu
     fi
 }
 

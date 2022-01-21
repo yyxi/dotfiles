@@ -1,0 +1,89 @@
+# vi: ft=sh
+# shellcheck disable=SC1091
+
+# tmux
+
+alias tmux="~/dotfiles/scripts/tmux/_tmux"
+
+if [[ -d "$HOME/.cargo" ]]
+then
+    source "$HOME/.cargo/env"
+fi
+
+# fasd
+
+if [[ -d "$HOME/dotfiles/vendor/fasd" ]]
+then
+  source "$HOME/dotfiles/vendor/fasd/fasd"
+  eval "$(fasd --init zsh-hook)"
+
+  z() {
+    local dir
+    dir="$(fasd -Rdl "$1" | fzf -1 -0 --no-sort +m)" && cd "${dir}" || return 1
+  }
+
+  v() {
+    local file
+    file="$(fasd -Rfl "$1" | fzf -1 -0 --no-sort +m)" && ${EDITOR} "${file}" || return 1
+  }
+fi
+
+# fzf
+
+if [[ -d "$HOME/dotfiles/vendor/fzf/bin" ]]
+then
+  export FZF_DEFAULT_OPTS='--color bw'
+
+  export PATH="$PATH:$HOME/dotfiles/vendor/fzf/bin"
+
+  if [[ $- =~ i ]]
+  then
+    source "$HOME/dotfiles/vendor/fzf/shell/completion.zsh" 2> /dev/null
+  fi
+
+  source "$HOME/dotfiles/vendor/fzf/shell/key-bindings.zsh"
+fi
+
+# gvm
+
+if [[ -s "$HOME/.gvm/scripts/gvm" ]]
+then
+  source "$HOME/.gvm/scripts/gvm"
+fi
+
+# vim
+
+if [[ -d "$HOME/.vim-dist/bin/" ]]
+then
+  export PATH="$HOME/.vim-dist/bin:$PATH"
+fi
+
+if [[ -d "$HOME/.neovim-dist/bin/" ]]
+then
+  export PATH="$HOME/.neovim-dist/bin:$PATH"
+fi
+
+if command -v nvim > /dev/null 2>&1
+then
+    alias vi='nvim'
+    alias vim='nvim'
+    export EDITOR='nvim'
+    export VISUAL='nvim'
+else
+    alias vi='vim'
+    export EDITOR='vim'
+    export VISUAL='vim'
+fi
+
+bindkey -M vicmd "v" edit-command-line
+
+# ssh
+
+alias ssh='TERM=xterm ssh'
+
+# svu
+
+if [[ -d "$HOME/dotfiles/vendor/svu" ]]
+then
+  export PATH="$PATH:$HOME/dotfiles/vendor/svu"
+fi

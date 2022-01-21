@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# @description install svu
+# @dependency curl
+# @dependency sha256sum
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main () {
+  strict  true
+  verbose true
+
+  local version="1.9.0"
+
+  local os
+
+  os="$(uname)"
+
+  case "${os}" in
+    Linux)
+      os="linux"
+      ;;
+    Darwin)
+      os="darwin"
+      ;;
+    *)
+      _ error "Unknown OS type"
+      return 1
+  esac
+
+  local architecture
+
+  if [[ "${os}" == "darwin" ]]
+  then
+    architecture="all"
+  else
+    architecture="$(uname -m)"
+
+    case "${architecture}" in
+      x86_64)
+        architecture="amd64"
+        ;;
+      aarch64)
+        architecture="arm64"
+        ;;
+      *)
+        _ error "Unknown architecture: $(uname -m)"
+        return 1
+    esac
+  fi
+
+  local directory="${MANAGE_REPOSITORY}/vendor/svu"
+
+  local prefix="https://github.com/caarlos0/svu/releases/download/"
+  local binary="${prefix}v${version}/svu_${version}_${os}_${architecture}.tar.gz"
+  local checksums="${prefix}v${version}/checksums.txt"
+
+  if [[ ! -f "${directory}/svu" ]]
+  then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/${binary##*/}"
+    curl -0 -s -S -L "${checksums}" -o "${directory}/checksums.txt"
+
+    (
+      cd "${directory}" || _ die
+      sha256sum --ignore-missing --status -c "${directory}/checksums.txt"
+      rm -f "${directory}/checksums.txt"
+    )
+
+    (
+      cd "${directory}" || _ die
+      tar -zxvf "${directory}/${binary##*/}" svu
+      chmod +x svu
+      rm -f "${directory}/${binary##*/}"
+    )
+  fi
+}
