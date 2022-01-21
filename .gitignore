@@ -3,3 +3,4 @@ tmp/*
 .ropeproject
 vendor/restic
 vendor/rclone
+vendor/svu
