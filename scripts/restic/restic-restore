@@ -5,16 +5,15 @@
 # @import github.com/escapace/stack-tools  restic/restic
 
 main () {
-    strict  true
-    verbose true
+  strict  true
+  verbose true
 
-    _ required "${B2_ACCOUNT_ID}"  || _ die "B2_ACCOUNT_ID environment variable not set"
-    _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
-    _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
+  _ required "${B2_ACCOUNT_ID}"  || _ die "B2_ACCOUNT_ID environment variable not set"
+  _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
+  _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
 
-    _ restic restore \
-        -r b2:"${B2_BUCKET_NAME}":/ latest \
-        -o b2.connections=50 \
-        --target "${HOME}/devel"
-        
+  _ restic restore \
+    -r b2:"${B2_BUCKET_NAME}":/ latest \
+    -o b2.connections=100 \
+    --target "${HOME}/devel"
 }
