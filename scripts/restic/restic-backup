@@ -12,8 +12,10 @@ main () {
   _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
   _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
 
+  cd "${HOME}/devel" || _ die "${HOME}/devel: No such directory"
+
   _ restic backup \
     --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \
     -o b2.connections=100 \
-    -r b2:"${B2_BUCKET_NAME}":/ "${HOME}/devel"
+    -r b2:"${B2_BUCKET_NAME}":/ .
 }
