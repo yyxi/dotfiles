@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# @description install delta
+# @dependency curl
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main() {
+  strict true
+  verbose true
+
+  local version="${DELTA_VERSION}"
+
+  local os
+
+  os="$(uname)"
+
+  case "${os}" in
+    Linux)
+      os="unknown-linux"
+      ;;
+    Darwin)
+      os="apple-darwin"
+      ;;
+    *)
+      _ die "Unknown OS type"
+      ;;
+  esac
+
+  local architecture
+
+  if [[ "${os}" == "darwin" ]]; then
+    architecture="all"
+  else
+    architecture="$(uname -m)"
+
+    case "${architecture}" in
+      x86_64)
+        architecture="x86_64"
+        ;;
+      aarch64)
+        architecture="aarch64"
+        ;;
+      *)
+        _ die "Unknown architecture: $(uname -m)"
+        return 1
+        ;;
+    esac
+  fi
+
+  local directory="${MANAGE_REPOSITORY}/vendor/delta"
+
+  local prefix="https://github.com/dandavison/delta/releases/download/${version}"
+  local binary
+  local name
+
+  if [[ "${os}" == "apple-darwin"  ]]
+  then
+    name="delta-${version}-${architecture}-${os}"
+    binary="${prefix}/${name}.tar.gz"
+  else
+    name="delta-${version}-${architecture}-${os}-gnu"
+    binary="${prefix}/${name}.tar.gz"
+  fi
+
+  if [[ ! -f "${directory}/delta" ]]; then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/${binary##*/}"
+
+    (
+      cd "${directory}" || _ die
+      tar --strip-components 1 -zxvf "${directory}/${binary##*/}" "${name}/delta"
+      chmod +x delta
+
+      if [[ ! -f "${HOME}/dotfiles/bin/delta" ]]; then
+        ln -s "${directory}/delta" "${HOME}/dotfiles/bin/delta"
+      fi
+
+      rm -f "${directory}/${binary##*/}"
+    )
+  fi
+}

@@ -6,6 +6,7 @@ vendor/rclone
 vendor/svu
 vendor/fd
 vendor/zoxide
+vendor/delta
 !bin/.gitkeep
 !bin/unarchive
 
