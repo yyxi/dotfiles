@@ -12,7 +12,7 @@ main() {
   # _ manage trust-escapace
 
   if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
-    # git submodule update --init --recursive
+    git submodule update --init --recursive
 
     _ manage install-svu
     _ manage install-fd
@@ -25,8 +25,7 @@ main() {
       cd "${HOME}/dotfiles/vendor/fzf" || exit 1
       "${HOME}/dotfiles/vendor/fzf/install" --bin
 
-      if [[ ! -f "${HOME}/dotfiles/bin/fzf" ]]
-      then
+      if [[ ! -f "${HOME}/dotfiles/bin/fzf" ]]; then
         ln -s "${HOME}/dotfiles/vendor/fzf/bin/fzf" \
           "${HOME}/dotfiles/bin/fzf"
       fi

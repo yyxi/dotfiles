@@ -21,9 +21,9 @@ jobs:
       - name: Dependencies
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-               sudo apt-get install zsh bc
+               sudo apt-get install fish bc
           elif [ "$RUNNER_OS" == "macOS" ]; then
-               brew install bash zsh bc gnu-sed
+               brew install bash fish bc gnu-sed
           fi
       - name: Test
         run: |
