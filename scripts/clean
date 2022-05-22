@@ -7,7 +7,7 @@ main () {
     verbose true
 
     if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
-        _ runcoms clean "${HOME}"/dotfiles/zsh/runcoms || true
+        _ runcoms clean "${HOME}"/dotfiles/runcoms || true
     fi
 }
 

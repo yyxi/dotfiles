@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # @description install dotfiles
-# @dependency zsh
+# @dependency fish
 # @dependency git
 # @import dotfiles/runcoms
 # @import manage/manage
