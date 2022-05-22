@@ -5,11 +5,11 @@
 # @import console/error
 # @import console/die
 
-main () {
-  strict  true
+main() {
+  strict true
   verbose true
 
-  local version="1.9.0"
+  local version="${SVU_VERSION}"
 
   local os
 
@@ -24,12 +24,12 @@ main () {
       ;;
     *)
       _ die "Unknown OS type"
+      ;;
   esac
 
   local architecture
 
-  if [[ "${os}" == "darwin" ]]
-  then
+  if [[ "${os}" == "darwin" ]]; then
     architecture="all"
   else
     architecture="$(uname -m)"
@@ -44,17 +44,17 @@ main () {
       *)
         _ die "Unknown architecture: $(uname -m)"
         return 1
+        ;;
     esac
   fi
 
   local directory="${MANAGE_REPOSITORY}/vendor/svu"
 
-  local prefix="https://github.com/caarlos0/svu/releases/download/"
-  local binary="${prefix}v${version}/svu_${version}_${os}_${architecture}.tar.gz"
-  local checksums="${prefix}v${version}/checksums.txt"
+  local prefix="https://github.com/caarlos0/svu/releases/download/v${version}"
+  local binary="${prefix}/svu_${version}_${os}_${architecture}.tar.gz"
+  local checksums="${prefix}/checksums.txt"
 
-  if [[ ! -f "${directory}/svu" ]]
-  then
+  if [[ ! -f "${directory}/svu" ]]; then
     mkdir -p "${directory}"
 
     curl -0 -S -L --progress-bar "${binary}" -o "${directory}/${binary##*/}"
@@ -63,11 +63,9 @@ main () {
     (
       cd "${directory}" || _ die
 
-      if command -v "sha256sum" &> /dev/null
-      then
+      if command -v "sha256sum" &> /dev/null; then
         sha256sum --ignore-missing --status -c "${directory}/checksums.txt"
-      elif command -v "shasum" &> /dev/null
-      then
+      elif command -v "shasum" &> /dev/null; then
         shasum -a 256 --ignore-missing --status -c "${directory}/checksums.txt"
       else
         _ die "No sha256sum or shasum in \$PATH."
@@ -80,6 +78,11 @@ main () {
       cd "${directory}" || _ die
       tar -zxvf "${directory}/${binary##*/}" svu
       chmod +x svu
+
+      if [[ ! -f "${HOME}/dotfiles/bin/svu" ]]; then
+        ln -s "${directory}/svu" "${HOME}/dotfiles/bin/svu"
+      fi
+
       rm -f "${directory}/${binary##*/}"
     )
   fi

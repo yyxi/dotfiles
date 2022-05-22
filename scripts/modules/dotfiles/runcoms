@@ -34,7 +34,7 @@ runcoms () {
 
         for rcfile in ${files}
         do
-            file=".${rcfile#"${path}/"}"
+            file="${rcfile#"${path}/"}"
             basename="$(basename "${file}")"
             if [[ "${file}" == "${basename}" ]]
             then

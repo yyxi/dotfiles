@@ -7,3 +7,7 @@ enable:
 default: help
 env:
   RESTIC_VERSION: 0.9.5
+  FD_VERSION: 8.3.2
+  SVU_VERSION: 1.9.0
+  ZOXIDE_VERSION: 0.8.1
+  DELTA_VERSION: 0.13.0

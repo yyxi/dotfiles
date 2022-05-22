@@ -1,9 +1,9 @@
-[submodule "vendor/fasd"]
-  path = vendor/fasd
-  url = https://github.com/clvv/fasd.git
-[submodule "vendor/prezto"]
-  path = vendor/prezto
-  url = https://github.com/sorin-ionescu/prezto.git
 [submodule "vendor/fzf"]
   path = vendor/fzf
   url = https://github.com/junegunn/fzf.git
+[submodule "vendor/oh-my-fish"]
+	path = vendor/oh-my-fish
+	url = https://github.com/oh-my-fish/oh-my-fish
+[submodule "vendor/fish-pisces"]
+	path = vendor/fish-pisces
+	url = https://github.com/laughedelic/pisces

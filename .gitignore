@@ -1,6 +1,12 @@
 .manage_modules
 tmp/*
-.ropeproject
+bin/*
 vendor/restic
 vendor/rclone
 vendor/svu
+vendor/fd
+vendor/zoxide
+!bin/.gitkeep
+!bin/unarchive
+
+

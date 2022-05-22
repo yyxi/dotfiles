@@ -5,22 +5,31 @@
 # @import dotfiles/runcoms
 # @import manage/manage
 
-main () {
-    strict  true
-    verbose true
+main() {
+  strict true
+  verbose true
 
-    _ manage trust-escapace
+  # _ manage trust-escapace
 
-    if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
-        local path
-        path="$HOME/dotfiles"
-        local OPWD=$PWD ; cd "${path}" || exit
-        # git submodule update --init --recursive
-        _ runcoms install "${HOME}"/dotfiles/zsh/runcoms
-        cd "${HOME}/dotfiles/vendor/fzf" && "${HOME}/dotfiles/vendor/fzf/install" --bin
-        cd "${OPWD}" || exit
+  if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
+    # git submodule update --init --recursive
 
-        _ manage install-svu
-    fi
+    _ manage install-svu
+    _ manage install-fd
+    _ manage install-delta
+    _ manage install-zoxide
+
+    _ runcoms install "${HOME}"/dotfiles/runcoms
+
+    (
+      cd "${HOME}/dotfiles/vendor/fzf" || exit 1
+      "${HOME}/dotfiles/vendor/fzf/install" --bin
+
+      if [[ ! -f "${HOME}/dotfiles/bin/fzf" ]]
+      then
+        ln -s "${HOME}/dotfiles/vendor/fzf/bin/fzf" \
+          "${HOME}/dotfiles/bin/fzf"
+      fi
+    )
+  fi
 }
-
