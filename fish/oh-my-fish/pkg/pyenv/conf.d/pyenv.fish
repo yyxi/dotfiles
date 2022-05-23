@@ -1,6 +1,7 @@
 if test -d $HOME/.pyenv
   set -Ux PYENV_ROOT $HOME/.pyenv
-  set -Ux fish_user_paths $PYENV_ROOT/bin $fish_user_paths
+  set -Ux PYENV_SHELL fish
+  fish_add_path $PYENV_ROOT/bin $PYENV_ROOT/shims
 
-  source (pyenv init - | psub)
+  pyenv init - | source
 end

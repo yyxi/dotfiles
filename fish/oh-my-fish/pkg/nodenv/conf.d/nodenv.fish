@@ -1,5 +1,5 @@
 if test -d $HOME/.nodenv
-  set -Ux fish_user_paths $HOME/.nodenv/bin $fish_user_paths
+  fish_add_path $HOME/.nodenv/bin
 
   source (nodenv init - | psub)
 end
