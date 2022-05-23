@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 
-if [[ -d "${HOME}/.config/fish" ]]; then
-  rm -rf "${HOME}/.config/fish"
-fi
+if [ -n "$GITPOD_WORKSPACE_ID" ]; then
+  sudo apt-add-repository ppa:fish-shell/release-3
+  sudo apt update
+  sudo apt install fish
 
-./manage install
+  if [[ -d "${HOME}/.config/fish" ]]; then
+    rm -rf "${HOME}/.config/fish"
+  fi
+
+  ./manage install
+fi
