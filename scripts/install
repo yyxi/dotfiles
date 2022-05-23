@@ -12,6 +12,8 @@ main() {
   # _ manage trust-escapace
 
   if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
+    cd "$HOME/.dotfiles"
+
     git submodule update --init --recursive
 
     _ manage install-svu
