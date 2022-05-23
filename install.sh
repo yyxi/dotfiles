@@ -8,5 +8,5 @@ if [ -n "$GITPOD_WORKSPACE_ID" ]; then
     rm -rf "${HOME}/.config/fish"
   fi
 
-  ./manage install
+  "${HOME}/.dotfiles/manage" install
 fi
