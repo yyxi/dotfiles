@@ -1,4 +1,6 @@
 .manage_modules
+fish/fishd.tmp.*
+fish/fish_variables
 tmp/*
 bin/*
 vendor/restic

@@ -1,6 +1,6 @@
 # This file contains fish universal variable definitions.
 # VERSION: 3.0
-SETUVAR --export PYENV_ROOT:/home/vagrant/\x2epyenv
+SETUVAR --export PYENV_ROOT:/Users/l5x/\x2epyenv
 SETUVAR __fish_initialized:3400
 SETUVAR base16_fish_theme:grayscale\x2ddark
 SETUVAR fish_color_autosuggestion:707070
@@ -32,5 +32,5 @@ SETUVAR fish_pager_color_description:normal
 SETUVAR fish_pager_color_prefix:normal
 SETUVAR fish_pager_color_progress:normal
 SETUVAR fish_pager_color_selected_background:\x2dr
-SETUVAR --export fish_user_paths:/home/vagrant/\x2epyenv/bin\x1e/home/vagrant/\x2enodenv/bin\x1e/home/vagrant/\x2elocal/share/pnpm\x1e/home/vagrant/\x2elocal/bin\x1e/home/vagrant/dotfiles/bin\x1e/home/vagrant/bin
+SETUVAR --export fish_user_paths:/Users/l5x/\x2epyenv/bin\x1e/Users/l5x/\x2enodenv/bin\x1e/usr/local/opt/curl/bin\x1e/usr/local/opt/gnu\x2dsed/libexec/gnubin\x1e/usr/local/opt/gnu\x2dtar/libexec/gnubin\x1e/usr/local/opt/coreutils/libexec/gnubin\x1e/Users/l5x/\x2eneovim\x2ddist/bin\x1e/Users/l5x/\x2elocal/bin\x1e/Users/l5x/dotfiles/bin\x1e/Users/l5x/bin\x1e/home/vagrant/\x2epyenv/bin\x1e/home/vagrant/\x2enodenv/bin\x1e/home/vagrant/\x2elocal/share/pnpm\x1e/home/vagrant/\x2elocal/bin\x1e/home/vagrant/dotfiles/bin\x1e/home/vagrant/bin
 SETUVAR pisces_pairs:\x28\x2c\x29\x1e\x5b\x2c\x5d\x1e\x7b\x2c\x7d\x1e\x22\x2c\x22\x1e\x27\x2c\x27
