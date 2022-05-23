@@ -70,8 +70,8 @@ main() {
       tar -zxvf "${directory}/${binary##*/}" zoxide
       chmod +x zoxide
 
-      if [[ ! -f "${HOME}/dotfiles/bin/zoxide" ]]; then
-        ln -s "${directory}/zoxide" "${HOME}/dotfiles/bin/zoxide"
+      if [[ ! -f "${HOME}/.dotfiles/bin/zoxide" ]]; then
+        ln -s "${directory}/zoxide" "${HOME}/.dotfiles/bin/zoxide"
       fi
 
       rm -f "${directory}/${binary##*/}"

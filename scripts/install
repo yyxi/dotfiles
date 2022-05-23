@@ -11,7 +11,7 @@ main() {
 
   # _ manage trust-escapace
 
-  if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
+  if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
     git submodule update --init --recursive
 
     _ manage install-svu
@@ -19,15 +19,15 @@ main() {
     _ manage install-delta
     _ manage install-zoxide
 
-    _ runcoms install "${HOME}"/dotfiles/runcoms
+    _ runcoms install "${HOME}"/.dotfiles/runcoms
 
     (
-      cd "${HOME}/dotfiles/vendor/fzf" || exit 1
-      "${HOME}/dotfiles/vendor/fzf/install" --bin
+      cd "${HOME}/.dotfiles/vendor/fzf" || exit 1
+      "${HOME}/.dotfiles/vendor/fzf/install" --bin
 
-      if [[ ! -f "${HOME}/dotfiles/bin/fzf" ]]; then
-        ln -s "${HOME}/dotfiles/vendor/fzf/bin/fzf" \
-          "${HOME}/dotfiles/bin/fzf"
+      if [[ ! -f "${HOME}/.dotfiles/bin/fzf" ]]; then
+        ln -s "${HOME}/.dotfiles/vendor/fzf/bin/fzf" \
+          "${HOME}/.dotfiles/bin/fzf"
       fi
     )
   fi

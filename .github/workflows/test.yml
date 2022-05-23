@@ -27,6 +27,6 @@ jobs:
           fi
       - name: Test
         run: |
-          ln -s $(pwd) ~/dotfiles
-          ~/dotfiles/manage install
-          ~/dotfiles/manage clean
+          ln -s $(pwd) ~/.dotfiles
+          ~/.dotfiles/manage install
+          ~/.dotfiles/manage clean

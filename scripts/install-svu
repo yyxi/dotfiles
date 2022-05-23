@@ -79,8 +79,8 @@ main() {
       tar -zxvf "${directory}/${binary##*/}" svu
       chmod +x svu
 
-      if [[ ! -f "${HOME}/dotfiles/bin/svu" ]]; then
-        ln -s "${directory}/svu" "${HOME}/dotfiles/bin/svu"
+      if [[ ! -f "${HOME}/.dotfiles/bin/svu" ]]; then
+        ln -s "${directory}/svu" "${HOME}/.dotfiles/bin/svu"
       fi
 
       rm -f "${directory}/${binary##*/}"

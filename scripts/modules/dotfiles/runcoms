@@ -26,7 +26,7 @@ runcoms () {
 
     path="$2"
 
-    if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
+    if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
         local OPWD=$PWD ; cd "${path}" || exit
         local OIFS=$IFS; IFS=$'\n'
         files=$(find "${path}" -type f -or -type l)

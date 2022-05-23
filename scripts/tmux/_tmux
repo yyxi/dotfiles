@@ -13,7 +13,7 @@ _tmuxsession () {
     local old_session_id
     local tmux="tmux"
 
-    path="$HOME/dotfiles/tmux"
+    path="$HOME/.dotfiles/tmux"
 
     if [ -d "${path}" ]
     then

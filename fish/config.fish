@@ -10,7 +10,7 @@ if isatty
 end
 
 fish_add_path $HOME/bin
-fish_add_path $HOME/dotfiles/bin
+fish_add_path $HOME/.dotfiles/bin
 fish_add_path $HOME/.local/bin/
 
 if test -d /usr/local/opt/coreutils/libexec/gnubin
@@ -49,7 +49,7 @@ if test -d $HOME/.local/share/pnpm
 end
 
 if type -q tmux
-  alias tmux="~/dotfiles/scripts/tmux/_tmux"
+  alias tmux="~/.dotfiles/scripts/tmux/_tmux"
 end
 
 if type -q nvim

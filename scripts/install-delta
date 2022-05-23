@@ -73,8 +73,8 @@ main() {
       tar --strip-components 1 -zxvf "${directory}/${binary##*/}" "${name}/delta"
       chmod +x delta
 
-      if [[ ! -f "${HOME}/dotfiles/bin/delta" ]]; then
-        ln -s "${directory}/delta" "${HOME}/dotfiles/bin/delta"
+      if [[ ! -f "${HOME}/.dotfiles/bin/delta" ]]; then
+        ln -s "${directory}/delta" "${HOME}/.dotfiles/bin/delta"
       fi
 
       rm -f "${directory}/${binary##*/}"

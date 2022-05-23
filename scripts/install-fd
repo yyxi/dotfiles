@@ -72,8 +72,8 @@ main() {
       tar --strip-components 1 -zxvf "${directory}/${binary##*/}" "${name}/fd"
       chmod +x fd
 
-      if [[ ! -f "${HOME}/dotfiles/bin/fd" ]]; then
-        ln -s "${directory}/fd" "${HOME}/dotfiles/bin/fd"
+      if [[ ! -f "${HOME}/.dotfiles/bin/fd" ]]; then
+        ln -s "${directory}/fd" "${HOME}/.dotfiles/bin/fd"
       fi
 
       rm -f "${directory}/${binary##*/}"

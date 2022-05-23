@@ -6,8 +6,8 @@ main () {
     strict  true
     verbose true
 
-    if [ -d "$HOME/dotfiles" ] || [ -L "$HOME/dotfiles" ]; then
-        _ runcoms clean "${HOME}"/dotfiles/runcoms || true
+    if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
+        _ runcoms clean "${HOME}"/.dotfiles/runcoms || true
     fi
 }
 
