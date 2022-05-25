@@ -4,6 +4,7 @@
 # @dependency git
 # @import dotfiles/runcoms
 # @import manage/manage
+# @import console/warn
 
 main() {
   strict true
@@ -12,7 +13,7 @@ main() {
   # _ manage trust-escapace
 
   if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
-    cd "$HOME/.dotfiles"
+    cd "$HOME/.dotfiles" || exit 1
 
     git submodule update --init --recursive
 
@@ -20,6 +21,12 @@ main() {
     _ manage install-fd
     _ manage install-delta
     _ manage install-zoxide
+
+    if [[ ! -L "${HOME}/.config/fish" ]]; then
+      _ warn "Deleting ${HOME}/.config/fish"
+
+      rm -rf "${HOME}/.config/fish"
+    fi
 
     _ runcoms install "${HOME}"/.dotfiles/runcoms
 
