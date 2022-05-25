@@ -58,7 +58,7 @@ main() {
     name="fd-v${version}-${architecture}-${os}"
     binary="${prefix}/${name}.tar.gz"
   else
-    name="fd-v${version}-${architecture}-${os}-musl"
+    name="fd-v${version}-${architecture}-${os}-gnu"
     binary="${prefix}/${name}.tar.gz"
   fi
 
