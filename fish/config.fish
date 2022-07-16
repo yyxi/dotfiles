@@ -44,8 +44,8 @@ if test -d $HOME/.neovim-dist/bin
 end
 
 if test -d $HOME/.local/share/pnpm
-  set -gx PNPM_HOME "/home/vagrant/.local/share/pnpm"
-  # fish_add_path $PNPM_HOME
+  set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+  fish_add_path $PNPM_HOME
 end
 
 if type -q tmux
