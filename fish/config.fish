@@ -26,7 +26,7 @@ if test -d /usr/local/opt/gnu-sed/libexec/gnubin
 end
 
 if test -d /usr/local/opt/curl/bin
-  fish_add_path jusr/local/opt/curl/bin
+  fish_add_path /usr/local/opt/curl/bin
 end
 
 # /opt/homebrew/bin /usr/local/bin /usr/bin /bin /opt/homebrew/sbin /usr/local/sbin /usr/sbin /sbin
