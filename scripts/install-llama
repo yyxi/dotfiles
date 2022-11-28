@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# @description install llama
+# @dependency curl
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main() {
+  strict true
+  verbose true
+
+  local version="${LLAMA_VERSION}"
+
+  local os
+
+  os="$(uname)"
+
+  case "${os}" in
+    Linux)
+      os="linux"
+      ;;
+    Darwin)
+      os="darwin"
+      ;;
+    *)
+      _ die "Unknown OS type"
+      ;;
+  esac
+
+  local architecture
+
+  architecture="$(uname -m)"
+
+  case "${architecture}" in
+    x86_64)
+      architecture="amd64"
+      ;;
+    aarch64 | arm64)
+      architecture="arm64"
+      ;;
+    *)
+      _ die "Unknown architecture: $(uname -m)"
+      return 1
+      ;;
+  esac
+
+  local directory="${MANAGE_REPOSITORY}/vendor/llama"
+
+  local prefix="https://github.com/antonmedv/llama/releases/download/v${version}"
+  local binary="${prefix}/llama_${os}_${architecture}"
+
+  if [[ ! -f "${directory}/llama" ]]; then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/llama"
+    chmod +x "${directory}/llama"
+    ln -s "${directory}/llama" "${HOME}/.dotfiles/bin/llama"
+  fi
+}

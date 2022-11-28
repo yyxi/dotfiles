@@ -6,6 +6,7 @@ bin/*
 vendor/restic
 vendor/rclone
 vendor/svu
+vendor/llama
 vendor/fd
 vendor/zoxide
 vendor/delta

@@ -6,7 +6,8 @@ enable:
 # Default script
 default: help
 env:
-  RESTIC_VERSION: 0.14.5
+  LLAMA_VERSION: 1.2.0
+  RESTIC_VERSION: 0.14.0
   FD_VERSION: 8.3.2
   SVU_VERSION: 1.9.0
   ZOXIDE_VERSION: 0.8.1

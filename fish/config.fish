@@ -37,6 +37,14 @@ if test -d /opt/homebrew/opt/gnu-sed/libexec/gnubin
   fish_add_path /opt/homebrew/opt/gnu-sed/libexec/gnubin
 end
 
+if test -d /usr/local/opt/findutils/libexec/gnubin
+  fish_add_path /usr/local/opt/findutils/libexec/gnubin
+end
+
+if test -d /opt/homebrew/opt/findutils/libexec/gnubin
+  fish_add_path /opt/homebrew/opt/findutils/libexec/gnubin
+end
+
 if test -d /usr/local/opt/curl/bin
   fish_add_path /usr/local/opt/curl/bin
 end
@@ -88,6 +96,12 @@ if type -q nvim
 
   set -x EDITOR nvim
   set -x VISUAL nvim
+end
+
+if type -q llama
+  function ll
+    cd (llama $argv);
+  end
 end
 
 function fish_user_key_bindings
