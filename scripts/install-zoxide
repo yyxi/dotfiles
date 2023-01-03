@@ -16,15 +16,15 @@ main() {
   os="$(uname)"
 
   case "${os}" in
-    Linux)
-      os="unknown-linux"
-      ;;
-    Darwin)
-      os="apple-darwin"
-      ;;
-    *)
-      _ die "Unknown OS type"
-      ;;
+  Linux)
+    os="unknown-linux"
+    ;;
+  Darwin)
+    os="apple-darwin"
+    ;;
+  *)
+    _ die "Unknown OS type"
+    ;;
   esac
 
   local architecture
@@ -35,16 +35,16 @@ main() {
     architecture="$(uname -m)"
 
     case "${architecture}" in
-      x86_64)
-        architecture="x86_64"
-        ;;
-      aarch64)
-        architecture="aarch64"
-        ;;
-      *)
-        _ die "Unknown architecture: $(uname -m)"
-        return 1
-        ;;
+    x86_64)
+      architecture="x86_64"
+      ;;
+    aarch64 | arm64)
+      architecture="aarch64"
+      ;;
+    *)
+      _ die "Unknown architecture: $(uname -m)"
+      return 1
+      ;;
     esac
   fi
 
@@ -53,8 +53,7 @@ main() {
   local prefix="https://github.com/ajeetdsouza/zoxide/releases/download/v${version}"
   local binary
 
-  if [[ "${os}" == "apple-darwin"  ]]
-  then
+  if [[ "${os}" == "apple-darwin" ]]; then
     binary="${prefix}/zoxide-v${version}-${architecture}-${os}.tar.gz"
   else
     binary="${prefix}/zoxide-v${version}-${architecture}-${os}-musl.tar.gz"

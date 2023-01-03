@@ -16,15 +16,15 @@ main() {
   os="$(uname)"
 
   case "${os}" in
-    Linux)
-      os="linux"
-      ;;
-    Darwin)
-      os="darwin"
-      ;;
-    *)
-      _ die "Unknown OS type"
-      ;;
+  Linux)
+    os="linux"
+    ;;
+  Darwin)
+    os="darwin"
+    ;;
+  *)
+    _ die "Unknown OS type"
+    ;;
   esac
 
   local architecture
@@ -32,16 +32,16 @@ main() {
   architecture="$(uname -m)"
 
   case "${architecture}" in
-    x86_64)
-      architecture="amd64"
-      ;;
-    aarch64 | arm64)
-      architecture="arm64"
-      ;;
-    *)
-      _ die "Unknown architecture: $(uname -m)"
-      return 1
-      ;;
+  x86_64)
+    architecture="amd64"
+    ;;
+  aarch64 | arm64)
+    architecture="arm64"
+    ;;
+  *)
+    _ die "Unknown architecture: $(uname -m)"
+    return 1
+    ;;
   esac
 
   local directory="${MANAGE_REPOSITORY}/vendor/llama"

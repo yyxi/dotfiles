@@ -2,12 +2,11 @@
 # @description clean dotfiles
 # @import dotfiles/runcoms
 
-main () {
-    strict  true
-    verbose true
+main() {
+  strict true
+  verbose true
 
-    if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
-        _ runcoms clean "${HOME}"/.dotfiles/runcoms || true
-    fi
+  if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
+    _ runcoms clean "${HOME}"/.dotfiles/runcoms || true
+  fi
 }
-

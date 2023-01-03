@@ -10,6 +10,7 @@ vendor/llama
 vendor/fd
 vendor/zoxide
 vendor/delta
+vendor/k6
 !bin/.gitkeep
 !bin/unarchive
 
