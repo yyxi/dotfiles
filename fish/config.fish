@@ -73,6 +73,7 @@ set -x LS_COLORS "rs=0:di=00;01:ln=00:mh=00:pi=00:so=00:do=00:bd=00;01:cd=00;01:
 set -x GREP_COLOR "7"
 set -x GREP_COLORS "mt=$GREP_COLOR"
 set -x FZF_DEFAULT_OPTS "--color bw"
+set -gx FZF_DEFAULT_COMMAND  'rg --files --color never --hidden --glob \'!.git\''
 set -x _ZO_FZF_OPTS "--color bw"
 
 alias ls="ls --group-directories-first --color=auto"
