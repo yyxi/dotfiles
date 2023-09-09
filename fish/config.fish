@@ -76,7 +76,7 @@ set -x FZF_DEFAULT_OPTS "--color bw"
 set -gx FZF_DEFAULT_COMMAND  'rg --files --color never --hidden --glob \'!.git\''
 set -x _ZO_FZF_OPTS "--color bw"
 
-alias ls="ls --group-directories-first --color=auto"
+alias ls="ls -a -l -h --group-directories-first --color=auto"
 
 if test -d $HOME/.neovim-dist/bin
   fish_add_path $HOME/.neovim-dist/bin
@@ -110,4 +110,15 @@ function fish_user_key_bindings
   fish_vi_key_bindings --no-erase insert
   bind -M insert \cC 'echo; commandline ""; commandline -f repaint'
   bind v edit_command_buffer
+end
+
+if type -q locale
+  for variable in (locale)
+    set -l array (string split '=' -- $variable)
+    set -l key $array[1]
+    set -l value (string trim -c '\'"' -- $array[2])
+    set -gx $key $value
+  end
+
+  set -gx LC_COLLATE C
 end
