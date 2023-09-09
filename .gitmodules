@@ -4,6 +4,3 @@
 [submodule "vendor/oh-my-fish"]
 	path = vendor/oh-my-fish
 	url = https://github.com/oh-my-fish/oh-my-fish
-[submodule "vendor/fish-pisces"]
-	path = vendor/fish-pisces
-	url = https://github.com/laughedelic/pisces

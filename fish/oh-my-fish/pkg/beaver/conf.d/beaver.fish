@@ -34,22 +34,22 @@ set -g fish_pager_color_prefix normal
 set -g fish_pager_color_progress normal
 
 function _beaver_pwd --on-variable PWD
-    set --query fish_prompt_pwd_dir_length || set --local fish_prompt_pwd_dir_length 1
-    set --global _beaver_pwd (
-        string replace --ignore-case -- ~ \~ $PWD |
-        string replace -- "/$root/" /:/ |
-        string replace --regex --all -- "(\.?[^/]{"$fish_prompt_pwd_dir_length"})[^/]*/" \$1/ |
-        string replace -- : "$root" |
-        string replace --regex -- '([^/]+)$' "\x1b[1m\$1\x1b[22m" |
-        string replace --regex --all -- '(?!^/$)/' "\x1b[2m/\x1b[22m"
-    )
+  set --query fish_prompt_pwd_dir_length || set --local fish_prompt_pwd_dir_length 1
+  set --global _beaver_pwd (
+    string replace --ignore-case -- ~ \~ $PWD |
+    string replace -- "/$root/" /:/ |
+    string replace --regex --all -- "(\.?[^/]{"$fish_prompt_pwd_dir_length"})[^/]*/" \$1/ |
+    string replace -- : "$root" |
+    string replace --regex -- '([^/]+)$' "\x1b[1m\$1\x1b[22m" |
+    string replace --regex --all -- '(?!^/$)/' "\x1b[2m/\x1b[22m"
+  )
 end
 
 function _beaver_prompt --on-event fish_prompt
   set --query _beaver_pwd || _beaver_pwd
 
   if test -n "$SSH_TTY"
-      set --global _beaver_hostname (prompt_login)" "
+    set --global _beaver_hostname (prompt_login)" "
   else
     set --global _beaver_hostname ""
   end
@@ -58,10 +58,10 @@ function _beaver_prompt --on-event fish_prompt
 end
 
 function _beaver_uninstall --on-event beaver_uninstall
-    set --names |
-      string replace --filter --regex -- "^(_?beaver_)" "set --erase \$1" |
-      source
-    functions --erase (functions --all | string match --entire --regex "^_?beaver_")
+  set --names |
+    string replace --filter --regex -- "^(_?beaver_)" "set --erase \$1" |
+    source
+  functions --erase (functions --all | string match --entire --regex "^_?beaver_")
 end
 
 set --global beaver_color_normal (set_color normal)

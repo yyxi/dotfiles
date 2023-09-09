@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# @description install llama
+# @description install walk
 # @dependency curl
 # @dependency tar
 # @import console/error
@@ -9,7 +9,7 @@ main() {
   strict true
   verbose true
 
-  local version="${LLAMA_VERSION}"
+  local version="${WALK_VERSION}"
 
   local os
 
@@ -44,16 +44,16 @@ main() {
     ;;
   esac
 
-  local directory="${MANAGE_REPOSITORY}/vendor/llama"
+  local directory="${MANAGE_REPOSITORY}/vendor/walk"
 
-  local prefix="https://github.com/antonmedv/llama/releases/download/v${version}"
-  local binary="${prefix}/llama_${os}_${architecture}"
+  local prefix="https://github.com/antonmedv/walk/releases/download/v${version}"
+  local binary="${prefix}/walk_${os}_${architecture}"
 
-  if [[ ! -f "${directory}/llama" ]]; then
+  if [[ ! -f "${directory}/walk" ]]; then
     mkdir -p "${directory}"
 
-    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/llama"
-    chmod +x "${directory}/llama"
-    ln -s "${directory}/llama" "${HOME}/.dotfiles/bin/llama"
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/walk"
+    chmod +x "${directory}/walk"
+    ln -s "${directory}/walk" "${HOME}/.dotfiles/bin/walk"
   fi
 }

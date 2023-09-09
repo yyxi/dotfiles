@@ -1,16 +1,17 @@
 .manage_modules
-fish/fishd.tmp.*
-fish/fish_variables
-tmp/*
 bin/*
-vendor/restic
-vendor/rclone
-vendor/svu
-vendor/llama
-vendor/fd
-vendor/zoxide
+fish/fish_variables
+fish/fishd.tmp.*
+tmp/*
 vendor/delta
+vendor/fd
 vendor/k6
+vendor/llama
+vendor/rclone
+vendor/restic
+vendor/svu
+vendor/walk
+vendor/zoxide
 !bin/.gitkeep
 !bin/unarchive
 

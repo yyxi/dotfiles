@@ -7,4 +7,3 @@ function __fzf_history_widget -d "Show command history"
 
   commandline -f repaint
 end
-

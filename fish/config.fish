@@ -99,9 +99,9 @@ if type -q nvim
   set -x VISUAL nvim
 end
 
-if type -q llama
+if type -q walk
   function ll
-    cd (llama $argv);
+    cd (walk $argv);
   end
 end
 
