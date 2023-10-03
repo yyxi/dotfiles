@@ -14,5 +14,6 @@ vendor/walk
 vendor/zoxide
 !bin/.gitkeep
 !bin/unarchive
+!bin/pipes
 
 
