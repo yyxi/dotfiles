@@ -122,3 +122,17 @@ if type -q locale
 
   set -gx LC_COLLATE C
 end
+
+if set -q KITTY_INSTALLATION_DIR
+  set --global KITTY_SHELL_INTEGRATION enabled no-cursor
+  source "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_conf.d/kitty-shell-integration.fish"
+  set --prepend fish_complete_path "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_completions.d"
+end
+
+if status is-interactive
+  set fish_cursor_default     block      blink
+  set fish_cursor_insert      block      blink
+  set fish_cursor_replace_one underscore blink
+  set fish_cursor_visual      block
+end
+
