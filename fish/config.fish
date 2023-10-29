@@ -136,3 +136,8 @@ if status is-interactive
   set fish_cursor_visual      block
 end
 
+# tabtab source for packages
+# uninstall by removing these lines
+if test -f ~/.config/tabtab/fish/__tabtab.fish
+  source ~/.config/tabtab/fish/__tabtab.fish
+end
