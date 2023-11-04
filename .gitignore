@@ -5,6 +5,7 @@ fish/fishd.tmp.*
 tmp/*
 vendor/delta
 vendor/fd
+vendor/fx
 vendor/k6
 vendor/llama
 vendor/rclone

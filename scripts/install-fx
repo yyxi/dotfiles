@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# @description install walk
+# @description install fx
 # @dependency curl
 # @dependency tar
 # @import console/error
@@ -9,7 +9,7 @@ main() {
   strict true
   verbose true
 
-  local version="${WALK_VERSION}"
+  local version="${FX_VERSION}"
 
   local os
 
@@ -36,7 +36,7 @@ main() {
     architecture="amd64"
     ;;
   aarch64 | arm64)
-    architecture="arm64"
+    architecture=""arm64
     ;;
   *)
     _ die "Unknown architecture: $(uname -m)"
@@ -44,19 +44,19 @@ main() {
     ;;
   esac
 
-  local directory="${MANAGE_REPOSITORY}/vendor/walk"
+  local directory="${MANAGE_REPOSITORY}/vendor/fx"
 
-  local prefix="https://github.com/antonmedv/walk/releases/download/v${version}"
-  local binary="${prefix}/walk_${os}_${architecture}"
+  local prefix="https://github.com/antonmedv/fx/releases/download/${version}"
+  local binary="fx_${os}_${architecture}"
 
-  if [[ ! -f "${directory}/walk" ]]; then
+  if [[ ! -f "${directory}/fx" ]]; then
     mkdir -p "${directory}"
 
-    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/walk"
-    chmod +x "${directory}/walk"
+    curl -0 -S -L --progress-bar "${prefix}/${binary}" -o "${directory}/fx"
+    chmod +x "${directory}/fx"
 
-    if [[ ! -f "${HOME}/.dotfiles/bin/walk" ]]; then
-      ln -s "${directory}/walk" "${HOME}/.dotfiles/bin/walk"
+    if [[ ! -f "${HOME}/.dotfiles/bin/fd" ]]; then
+      ln -s "${directory}/fx" "${HOME}/.dotfiles/bin/fx"
     fi
   fi
 }
