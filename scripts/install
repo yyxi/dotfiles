@@ -22,6 +22,7 @@ main() {
     _ manage install-delta
     _ manage install-zoxide
     _ manage install-walk
+    _ manage install-fx
 
     if [[ ! -L "${HOME}/.config/fish" ]]; then
       _ warn "Deleting ${HOME}/.config/fish"

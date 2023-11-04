@@ -55,7 +55,7 @@ main() {
     curl -0 -S -L --progress-bar "${prefix}/${binary}" -o "${directory}/fx"
     chmod +x "${directory}/fx"
 
-    if [[ ! -f "${HOME}/.dotfiles/bin/fd" ]]; then
+    if [[ ! -f "${HOME}/.dotfiles/bin/fx" ]]; then
       ln -s "${directory}/fx" "${HOME}/.dotfiles/bin/fx"
     fi
   fi
