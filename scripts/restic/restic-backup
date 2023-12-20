@@ -8,11 +8,12 @@ main() {
   strict true
   verbose true
 
+  _ required "${RESTIC_PATH}" || _ die "BACKUP_PATH environment variable not set"
   _ required "${B2_ACCOUNT_ID}" || _ die "B2_ACCOUNT_ID environment variable not set"
   _ required "${B2_ACCOUNT_KEY}" || _ die "B2_ACCOUNT_KEY environment variable not set"
   _ required "${B2_BUCKET_NAME}" || _ die "B2_BUCKET_NAME environment variable not set"
 
-  cd "${HOME}/devel" || _ die "${HOME}/devel: No such directory"
+  cd "${RESTIC_PATH}" || _ die "${RESTIC_PATH}: No such directory"
 
   _ restic backup \
     --exclude-file="${MANAGE_REPOSITORY}/scripts/restic/exclude.txt" \

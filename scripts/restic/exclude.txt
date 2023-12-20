@@ -1,3 +1,4 @@
+*.pdf
 .terraform
 node_modules
 .manage_modules
@@ -14,3 +15,18 @@ pip-log.txt
 pip-delete-this-directory.txt
 .pytest_cache
 .venv
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+.fuse_hidden*
+.nfs*
+.Trash-*
