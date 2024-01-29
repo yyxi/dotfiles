@@ -332,9 +332,9 @@ wezterm.on("gui-startup", function(window)
 	overrides.font_size = current_font_size
 	window:set_config_overrides(overrides)
 
-	if string.match(wezterm.target_triple, "apple%-darwin$") == nil then
-		window:maximize()
-	end
+	-- if string.match(wezterm.target_triple, "apple%-darwin$") == nil then
+	-- 	window:maximize()
+	-- end
 end)
 
 c.keys = {
