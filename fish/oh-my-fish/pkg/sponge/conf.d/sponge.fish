@@ -3,7 +3,7 @@ set --global sponge_version 1.1.0
 
 # Allow to repeat previous command by default
 if not set --query --universal sponge_delay
-  set --universal sponge_delay 2
+  set --universal sponge_delay 5
 end
 
 # Purge entries both after `sponge_delay` entries and on exit by default
@@ -13,7 +13,8 @@ end
 
 # Add default filters
 # if not set --query --universal sponge_filters
-set --universal sponge_filters _sponge_filter_failed _sponge_filter_matched
+set --universal sponge_filters _sponge_filter_matched
+# set --universal sponge_filters _sponge_filter_failed _sponge_filter_matched
 # end
 
 # Don't filter out commands that already have been in the history by default
