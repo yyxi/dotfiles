@@ -82,6 +82,10 @@ alias ls="ls -a -l -h --group-directories-first --color=auto"
 
 if test -d $HOME/.neovim-dist/bin
   fish_add_path $HOME/.neovim-dist/bin
+
+  if test -d $HOME/.local/share/nvim/mason/bin
+    fish_add_path $HOME/.local/share/nvim/mason/bin
+  end
 end
 
 if test -d $HOME/.local/share/pnpm
