@@ -30,15 +30,5 @@ main() {
     fi
 
     _ runcoms install "${HOME}"/.dotfiles/runcoms
-
-    (
-      cd "${HOME}/.dotfiles/vendor/fzf" || exit 1
-      "${HOME}/.dotfiles/vendor/fzf/install" --bin
-
-      if [[ ! -f "${HOME}/.dotfiles/bin/fzf" ]]; then
-        ln -s "${HOME}/.dotfiles/vendor/fzf/bin/fzf" \
-          "${HOME}/.dotfiles/bin/fzf"
-      fi
-    )
   fi
 }
