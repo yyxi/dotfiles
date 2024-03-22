@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# @description install fzf
+# @dependency curl
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main() {
+  strict true
+  verbose true
+
+  local version="${FZF_VERSION}"
+
+  local os
+  local extension
+
+  os="$(uname)"
+
+  case "${os}" in
+  Linux)
+    os="linux"
+    extension="tar.gz"
+    ;;
+  Darwin)
+    os="darwin"
+    extension="zip"
+    ;;
+  *)
+    _ die "Unknown OS type"
+    ;;
+  esac
+
+  local architecture
+
+  architecture="$(uname -m)"
+
+  case "${architecture}" in
+  x86_64)
+    architecture="amd64"
+    ;;
+  aarch64 | arm64)
+    architecture="arm64"
+    ;;
+  *)
+    _ die "Unknown architecture: $(uname -m)"
+    return 1
+    ;;
+  esac
+
+  local directory="${MANAGE_REPOSITORY}/vendor/fzf"
+
+  local prefix="https://github.com/junegunn/fzf/releases/download/${version}"
+  local archive="${prefix}/fzf-${version}-${os}_${architecture}.${extension}"
+  local checksums="${prefix}/fzf_${version}_checksums.txt"
+
+  if [[ ! -f "${directory}/fzf" ]]; then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${archive}" -o "${directory}/${archive##*/}"
+    curl -0 -s -S -L "${checksums}" -o "${directory}/checksums.txt"
+
+    (
+      cd "${directory}" || _ die
+
+      if command -v "sha256sum" &>/dev/null; then
+        sha256sum --ignore-missing --status -c "${directory}/checksums.txt"
+      elif command -v "shasum" &>/dev/null; then
+        shasum -a 256 --ignore-missing --status -c "${directory}/checksums.txt"
+      else
+        _ die "No sha256sum or shasum in \$PATH."
+      fi
+
+      rm -f "${directory}/checksums.txt"
+    )
+
+    (
+      cd "${directory}" || _ die
+
+      if [[ "${extension}" == "tar.gz" ]]; then
+        tar -zxvf "${directory}/${archive##*/}" -C "${directory}"
+      elif [[ "${extension}" == "zip" ]]; then
+        unzip -oqq "${directory}/${archive##*/}" -d "${directory}"
+      fi
+
+      chmod +x fzf
+
+      if [[ ! -f "${HOME}/.dotfiles/bin/fzf" ]]; then
+        ln -s "${directory}/fzf" "${HOME}/.dotfiles/bin/fzf"
+      fi
+
+      rm -f "${directory}/${archive##*/}"
+    )
+
+  fi
+}

@@ -15,8 +15,7 @@ main() {
   if [ -d "$HOME/.dotfiles" ] || [ -L "$HOME/.dotfiles" ]; then
     cd "$HOME/.dotfiles" || exit 1
 
-    git submodule update --init --recursive
-
+    _ manage install-fzf
     _ manage install-svu
     _ manage install-fd
     _ manage install-delta

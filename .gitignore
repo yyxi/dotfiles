@@ -6,6 +6,7 @@ tmp/*
 vendor/delta
 vendor/fd
 vendor/fx
+vendor/fzf
 vendor/k6
 vendor/llama
 vendor/rclone
@@ -14,7 +15,5 @@ vendor/svu
 vendor/walk
 vendor/zoxide
 !bin/.gitkeep
-!bin/unarchive
 !bin/pipes
-
-
+!bin/unarchive

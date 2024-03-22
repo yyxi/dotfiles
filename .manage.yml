@@ -10,6 +10,8 @@ env:
   DELTA_VERSION: 0.17.0
   # https://github.com/sharkdp/fd
   FD_VERSION: 9.0.0
+  # https://github.com/junegunn/fzf
+  FZF_VERSION: 0.48.1
   # https://github.com/antonmedv/fx
   FX_VERSION: 32.0.0
   # https://github.com/grafana/k6

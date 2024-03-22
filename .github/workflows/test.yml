@@ -1,4 +1,4 @@
-name: Test
+uame: Test
 on:
   push:
     branches:
@@ -16,8 +16,6 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
       - name: Dependencies
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
