@@ -93,6 +93,10 @@ if test -d $HOME/.local/share/pnpm
   fish_add_path $PNPM_HOME
 end
 
+if test -d $HOME/.rye
+  set -Ua fish_user_paths "$HOME/.rye/shims"
+end
+
 if type -q tmux
   alias tmux="~/.dotfiles/scripts/tmux/_tmux"
 end
