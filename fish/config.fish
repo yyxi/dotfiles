@@ -157,3 +157,6 @@ if type -q kitten
   alias ssh="kitten ssh"
 end
 
+if type -q "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+end
