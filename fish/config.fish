@@ -97,6 +97,27 @@ if test -d $HOME/.rye
   set -Ua fish_user_paths "$HOME/.rye/shims"
 end
 
+function fish_user_key_bindings
+  fish_default_key_bindings -M insert
+  fish_vi_key_bindings --no-erase insert
+  bind -M insert \cC 'echo; commandline ""; commandline -f repaint'
+  bind v edit_command_buffer
+end
+
+
+if status is-interactive
+  set fish_cursor_default     block      blink
+  set fish_cursor_insert      block      blink
+  set fish_cursor_replace_one underscore blink
+  set fish_cursor_visual      block
+end
+
+# tabtab source for packages
+# uninstall by removing these lines
+if test -f ~/.config/tabtab/fish/__tabtab.fish
+  source ~/.config/tabtab/fish/__tabtab.fish
+end
+
 if type -q tmux
   alias tmux="~/.dotfiles/scripts/tmux/_tmux"
 end
@@ -113,13 +134,6 @@ if type -q walk
   function ll
     cd (walk $argv);
   end
-end
-
-function fish_user_key_bindings
-  fish_default_key_bindings -M insert
-  fish_vi_key_bindings --no-erase insert
-  bind -M insert \cC 'echo; commandline ""; commandline -f repaint'
-  bind v edit_command_buffer
 end
 
 if type -q locale
@@ -139,15 +153,7 @@ if set -q KITTY_INSTALLATION_DIR
   set --prepend fish_complete_path "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_completions.d"
 end
 
-if status is-interactive
-  set fish_cursor_default     block      blink
-  set fish_cursor_insert      block      blink
-  set fish_cursor_replace_one underscore blink
-  set fish_cursor_visual      block
+if type -q kitten
+  alias ssh="kitten ssh"
 end
 
-# tabtab source for packages
-# uninstall by removing these lines
-if test -f ~/.config/tabtab/fish/__tabtab.fish
-  source ~/.config/tabtab/fish/__tabtab.fish
-end
