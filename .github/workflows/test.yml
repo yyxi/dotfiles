@@ -1,4 +1,4 @@
-uame: Test
+name: Test
 on:
   push:
     branches:
