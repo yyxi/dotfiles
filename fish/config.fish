@@ -160,3 +160,7 @@ end
 if type -q "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 end
+
+if test -d $HOME/.config/op
+  source $HOME/.config/op/plugins.sh
+end
