@@ -1,0 +1,142 @@
+[alias]
+  amend = commit --amend
+  current = "!svu --tag-mode all-branches current"
+  major = "!svu --tag-mode all-branches major"
+  minor = "!svu --tag-mode all-branches minor"
+  next = "!svu --tag-mode all-branches next"
+  patch = "!svu --tag-mode all-branches patch"
+  todo = grep -iEI "TODO|FIXME|FIX"
+  who = "!sh -c 'git shortlog -s -n --all --no-merges -e'"
+
+[color]
+  ui = never
+
+[commit]
+  gpgSign = true
+
+[core]
+  attributesFile = ~/.dotfiles/git/gitattributes
+  excludesFile = ~/.dotfiles/git/gitignore
+  ignoreCase = false
+  pager = delta
+  whitespace = -trailing-space
+
+[credential]
+  helper = cache --timeout=36000
+
+[diff]
+  algorithm = histogram
+  colorMoved = default
+  submodule = log
+
+[fetch]
+  fsckObjects = true
+
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  process = git-lfs filter-process
+  required = true
+  smudge = git-lfs smudge -- %f
+
+[gpg]
+	format = ssh
+
+[init]
+  templateDir = ~/.dotfiles/git/template/
+
+[interactive]
+  diffFilter = delta --color-only
+
+[log]
+  date = iso-local
+
+[merge]
+  conflictStyle = zdiff3
+
+[pull]
+  rebase = true
+
+[push]
+  default = simple
+  followTags = true
+  autoSetupRemote = true
+
+[receive]
+  fsckObjects = true
+
+[status]
+  relativePaths = true
+  submoduleSummary = false
+
+[tag]
+  gpgSign = true
+
+[transfer]
+  fsckObjects = true
+
+[url "git@github.com:"]
+  insteadOf = "gh:"
+  insteadOf = "git://github.com"
+  pushInsteadOf = "git://github.com/"
+  pushInsteadOf = "github:"
+  pushInsteadOf = "https://github.com/"
+
+[url "git@gist.github.com:"]
+  insteadOf = "gst:"
+  pushInsteadOf = "gist:"
+  pushInsteadOf = "git://gist.github.com/"
+  pushInsteadOf = "https://gist.github.com/"
+
+[user]
+  email = 178086254+yyxi@users.noreply.github.com
+  name = yyxi
+  signingkey = /home/ec2-user/.ssh/id_ed25519.pub
+
+[delta]
+  features = side-by-side gruvmax
+  inspect-raw-lines = false
+  true-color = always
+  whitespace-error-style = 22 reverse
+
+[delta "gruvmax"]
+  blame-code-style = syntax
+  blame-format = "{author:>18} ({commit:>8}) {timestamp:<13} "
+  blame-palette = "#000000" "#1d2021" "#282828" "#3c3836"
+  commit-decoration-style = none
+  commit-style = "#ffffff" bold
+  dark = true
+  file-added-label = [+]
+  file-copied-label = [C]
+  file-decoration-style = "#434C5E" ul
+  ; file-decoration-style = "#84786A" ul
+  file-decoration-style = none
+  file-modified-label = [M]
+  file-removed-label = [-]
+  file-renamed-label = [R]
+  file-style = 232 bold 184
+  hunk-header-style = omit
+  inline-hint-style = syntax
+  line-numbers = true
+  line-numbers-left-format = " {nm:>3} │"
+  line-numbers-left-style = black
+  line-numbers-minus-style = "#B10036"
+  line-numbers-plus-style = "#03a4ff"
+  line-numbers-right-format = " {np:>3} │"
+  line-numbers-right-style = black
+  line-numbers-zero-style = "#84786A"
+  line-numbers-zero-style = "#999999"
+  merge-conflict-begin-symbol = ⌃
+  merge-conflict-end-symbol = ⌄
+  merge-conflict-ours-diff-header-decoration-style = ''
+  merge-conflict-ours-diff-header-style = "#FABD2F" bold
+  merge-conflict-theirs-diff-header-decoration-style = ''
+  merge-conflict-theirs-diff-header-style = "#FABD2F" bold overline
+  minus-emph-style = syntax "#80002a"
+  minus-non-emph-style = syntax auto
+  minus-style = syntax black
+  plus-emph-style = syntax "#003300"
+  plus-non-emph-style = syntax auto
+  plus-style = syntax black
+  syntax-theme = gruvbox-dark
+  whitespace-error-style = "#FB4934" reverse
+  zero-style = dim syntax
