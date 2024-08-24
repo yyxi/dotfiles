@@ -153,12 +153,16 @@ if set -q KITTY_INSTALLATION_DIR
   set --prepend fish_complete_path "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_completions.d"
 end
 
-if type -q kitten
-  alias ssh="kitten ssh"
-end
-
 if type -q "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+end
+
+if test -n "$SSH_CLIENT" && test  -n "$SSH_TTY"
+  true
+else
+  if type -q kitten
+    alias ssh="kitten ssh"
+  end
 end
 
 if test -d $HOME/.config/op
