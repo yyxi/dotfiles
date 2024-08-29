@@ -14,6 +14,7 @@ vendor/restic
 vendor/svu
 vendor/walk
 vendor/zoxide
+vendor/yazi
 !bin/.gitkeep
 !bin/pipes
 !bin/unarchive

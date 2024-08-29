@@ -6,6 +6,8 @@ enable:
 # Default script
 default: help
 env:
+  # https://github.com/sxyazi/yazi
+  YAZI_VERSION: 0.3.1
   # https://github.com/dandavison/delta
   DELTA_VERSION: 0.18.0
   # https://github.com/sharkdp/fd
