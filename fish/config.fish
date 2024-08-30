@@ -165,6 +165,10 @@ else
   end
 end
 
-if test -d $HOME/.config/op
+if test -f $HOME/.config/op/plugins.sh
   source $HOME/.config/op/plugins.sh
+end
+
+if test -d $HOME/.local/bin
+  fish_add_path $HOME/.local/bin
 end
