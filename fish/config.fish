@@ -112,12 +112,6 @@ if status is-interactive
   set fish_cursor_visual      block
 end
 
-# tabtab source for packages
-# uninstall by removing these lines
-if test -f ~/.config/tabtab/fish/__tabtab.fish
-  source ~/.config/tabtab/fish/__tabtab.fish
-end
-
 if type -q tmux
   alias tmux="~/.dotfiles/scripts/tmux/_tmux"
 end
@@ -171,4 +165,8 @@ end
 
 if test -d $HOME/.local/bin
   fish_add_path $HOME/.local/bin
+end
+
+if test -d $HOME/.pulumi/bin
+  fish_add_path $HOME/.pulumi/bin
 end
