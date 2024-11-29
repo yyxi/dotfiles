@@ -2,7 +2,7 @@
 # @description backup to restic repository
 # @import console/die
 # @import lang/required
-# @import github.com/escapace/stack-tools restic/restic
+# @import github.com/escapace/manage-tools restic/restic
 
 main() {
   strict true
