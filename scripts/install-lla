@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# @description install lla
+# @dependency curl
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main() {
+  strict true
+  verbose true
+
+  local version="${LLA_VERSION}"
+
+  local os
+
+  os="$(uname)"
+
+  case "${os}" in
+  Linux)
+    os="linux"
+    ;;
+  Darwin)
+    os="macos"
+    ;;
+  *)
+    _ die "Unknown OS type"
+    ;;
+  esac
+
+  local architecture
+
+  if [[ "${os}" == "darwin" ]]; then
+    architecture="all"
+  else
+    architecture="$(uname -m)"
+
+    case "${architecture}" in
+    x86_64)
+      architecture="amd64"
+      ;;
+    aarch64 | arm64)
+      architecture="arm64"
+      ;;
+    *)
+      _ die "Unknown architecture: $(uname -m)"
+      return 1
+      ;;
+    esac
+  fi
+
+  local directory="${MANAGE_REPOSITORY}/vendor/lla"
+
+  local prefix="https://github.com/triyanox/lla/releases/download/v${version}"
+  local binary="${prefix}/lla-${os}-${architecture}"
+  local checksums="${prefix}/SHA256SUMS"
+
+  if [[ ! -f "${directory}/lla" ]]; then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/${binary##*/}"
+    curl -0 -s -S -L "${checksums}" -o "${directory}/SHA256SUMS"
+
+    awk '{ split($2, parts, "/"); $2 = parts[2]; print $1, $2 }' "${directory}/SHA256SUMS" > "${directory}/temp_file"
+    mv "${directory}/temp_file" "${directory}/SHA256SUMS"
+
+    (
+      cd "${directory}" || _ die
+
+      if command -v "sha256sum" &>/dev/null; then
+        sha256sum --ignore-missing --status -c "${directory}/SHA256SUMS"
+      elif command -v "shasum" &>/dev/null; then
+        shasum -a 256 --ignore-missing --status -c "${directory}/SHA256SUMS"
+      else
+        _ die "No sha256sum or shasum in \$PATH."
+      fi
+
+      rm -f "${directory}/SHA256SUMS"
+    )
+
+    (
+      cd "${directory}" || _ die
+
+      mv lla* lla
+      chmod +x lla
+
+      if [[ ! -f "${HOME}/.dotfiles/bin/lla" ]]; then
+        ln -s "${directory}/lla" "${HOME}/.dotfiles/bin/lla"
+      fi
+
+      rm -f "${directory}/${binary##*/}"
+    )
+  fi
+}

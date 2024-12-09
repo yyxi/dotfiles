@@ -93,17 +93,12 @@ if test -d $HOME/.local/share/pnpm
   fish_add_path $PNPM_HOME
 end
 
-if test -d $HOME/.rye
-  set -Ua fish_user_paths "$HOME/.rye/shims"
-end
-
 function fish_user_key_bindings
   fish_default_key_bindings -M insert
   fish_vi_key_bindings --no-erase insert
   bind -M insert \cC 'echo; commandline ""; commandline -f repaint'
   bind v edit_command_buffer
 end
-
 
 if status is-interactive
   set fish_cursor_default     block      blink

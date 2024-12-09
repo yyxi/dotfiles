@@ -55,6 +55,7 @@ end
 set --universal sponge_regex_patterns \
   'ACCESS_KEY' \
   'ACCESS_TOKEN' \
+  'API_KEY' \
   'API_TOKEN' \
   'AWS_' \
   'B2_ACCOUNT_ID' \

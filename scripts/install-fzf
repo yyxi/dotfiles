@@ -49,9 +49,10 @@ main() {
 
   local directory="${MANAGE_REPOSITORY}/vendor/fzf"
 
-  local prefix="https://github.com/junegunn/fzf/releases/download/${version}"
+  local prefix="https://github.com/junegunn/fzf/releases/download/v${version}"
   local archive="${prefix}/fzf-${version}-${os}_${architecture}.${extension}"
   local checksums="${prefix}/fzf_${version}_checksums.txt"
+  # https://github.com/junegunn/fzf/releases/download/v0.56.3/fzf_0.56.3_checksums.txt
 
   if [[ ! -f "${directory}/fzf" ]]; then
     mkdir -p "${directory}"
