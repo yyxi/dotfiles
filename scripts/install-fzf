@@ -23,7 +23,7 @@ main() {
     ;;
   Darwin)
     os="darwin"
-    extension="zip"
+    extension="tar.gz"
     ;;
   *)
     _ die "Unknown OS type"
