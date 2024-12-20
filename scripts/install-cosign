@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# @description install cosign
+# @dependency curl
+# @dependency tar
+# @import console/error
+# @import console/die
+
+main() {
+  strict true
+  verbose true
+
+  local version="${COSIGN_VERSION}"
+
+  local os
+
+  os="$(uname)"
+
+  case "${os}" in
+  Linux)
+    os="linux"
+    ;;
+  Darwin)
+    os="darwin"
+    ;;
+  *)
+    _ die "Unknown OS type"
+    ;;
+  esac
+
+  local architecture
+
+  architecture="$(uname -m)"
+
+  case "${architecture}" in
+  x86_64)
+    architecture="amd64"
+    ;;
+  aarch64 | arm64)
+    architecture="arm64"
+    ;;
+  *)
+    _ die "Unknown architecture: $(uname -m)"
+    return 1
+    ;;
+  esac
+
+  local directory="${MANAGE_REPOSITORY}/vendor/cosign"
+
+  local prefix="https://github.com/sigstore/cosign/releases/download/v${version}"
+  local binary="${prefix}/cosign-${os}-${architecture}"
+  local checksums="${prefix}/cosign_checksums.txt"
+
+  if [[ ! -f "${directory}/cosign" ]]; then
+    mkdir -p "${directory}"
+
+    curl -0 -S -L --progress-bar "${binary}" -o "${directory}/${binary##*/}"
+    curl -0 -s -S -L "${checksums}" -o "${directory}/checksums.txt"
+
+    (
+      cd "${directory}" || _ die
+
+      if command -v "sha256sum" &>/dev/null; then
+        sha256sum --ignore-missing --status -c "${directory}/checksums.txt"
+      elif command -v "shasum" &>/dev/null; then
+        shasum -a 256 --ignore-missing --status -c "${directory}/checksums.txt"
+      else
+        _ die "No sha256sum or shasum in \$PATH."
+      fi
+
+      rm -f "${directory}/checksums.txt"
+    )
+
+    (
+      cd "${directory}" || _ die
+      mv "${directory}/${binary##*/}" cosign
+      chmod +x cosign
+
+      if [[ ! -f "${HOME}/.dotfiles/bin/cosign" ]]; then
+        ln -s "${directory}/cosign" "${HOME}/.dotfiles/bin/cosign"
+      fi
+
+      rm -f "${directory}/${checksums}"
+    )
+  fi
+}

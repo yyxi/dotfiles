@@ -28,3 +28,9 @@ env:
   ZOXIDE_VERSION: 0.9.6
   # https://github.com/triyanox/lla
   LLA_VERSION: 0.2.10
+  # https://github.com/getsops/sops
+  SOPS_VERSION: 3.9.2
+  # https://github.com/sigstore/cosign
+  COSIGN_VERSION: 2.4.1
+  # https://github.com/FiloSottile/age
+  AGE_VERSION: 1.2.1
