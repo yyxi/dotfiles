@@ -1,4 +1,7 @@
+*.box
+*.iso
 *.pdf
+.vagrant
 .terraform
 node_modules
 .manage_modules
