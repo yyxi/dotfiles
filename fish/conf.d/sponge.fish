@@ -65,6 +65,8 @@ set --universal sponge_regex_patterns \
   'CONSUL_HTTP_TOKEN' \
   'CONTAINER_REGISTRY_TOKEN' \
   'GITHUB_TOKEN' \
+  'DUO_' \
+  'DUOSECURITY' \
   'NOMAD_TOKEN' \
   'NPM_TOKEN' \
   'SECRET_KEY' \
@@ -72,4 +74,5 @@ set --universal sponge_regex_patterns \
   'TF_VAR_' \
   'VAGRANT_ACCESS_TOKEN' \
   'VAULT_' \
-  '^vault'
+  '^vault' \
+  '^fly secrets'
