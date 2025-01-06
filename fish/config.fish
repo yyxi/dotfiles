@@ -146,10 +146,10 @@ if type -q "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 end
 
-if test -n "$SSH_CLIENT" && test  -n "$SSH_TTY"
+if test -n "$SSH_CLIENT" && test -n "$SSH_TTY"
   true
 else
-  if type -q kitten
+  if type -q kitten && [ "$TERM" = "xterm-kitty" ]
     alias ssh="kitten ssh"
   end
 end
