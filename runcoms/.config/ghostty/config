@@ -4,7 +4,6 @@ selection-foreground = #928374
 selection-background = #ebdbb2
 cursor-color = #ebdbb2
 cursor-text = #1d2021
-minimum-contrast = 1.2
 
 cursor-style-blink = true
 mouse-hide-while-typing = false
