@@ -34,3 +34,5 @@ env:
   COSIGN_VERSION: 2.4.1
   # https://github.com/FiloSottile/age
   AGE_VERSION: 1.2.1
+  # https://github.com/Wilfred/difftastic/
+  DIFFT_VERSION: 0.62.0

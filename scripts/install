@@ -19,6 +19,7 @@ main() {
     _ manage install-svu
     _ manage install-fd
     _ manage install-delta
+    _ manage install-difft
     _ manage install-zoxide
     _ manage install-walk
     _ manage install-fx
