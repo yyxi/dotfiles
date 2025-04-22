@@ -64,11 +64,13 @@ set --universal sponge_regex_patterns \
   'CLOUDFLARE_API_TOKEN' \
   'CONSUL_HTTP_TOKEN' \
   'CONTAINER_REGISTRY_TOKEN' \
-  'GITHUB_TOKEN' \
-  'DUO_' \
   'DUOSECURITY' \
+  'DUO_' \
+  'GITHUB_TOKEN' \
   'NOMAD_TOKEN' \
   'NPM_TOKEN' \
+  'PASSWORD' \
+  'SECRET' \
   'SECRET_KEY' \
   'SESSION_KEYS_' \
   'TF_VAR_' \

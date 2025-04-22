@@ -8,11 +8,17 @@
   todo = grep -iEI "TODO|FIXME|FIX"
   who = "!sh -c 'git shortlog -s -n --all --no-merges -e'"
 
+[branch]
+  sort = -committerdate
+
 [color]
   ui = never
 
 [commit]
   gpgSign = true
+
+[column]
+	ui = never
 
 [core]
   attributesFile = ~/.dotfiles/git/gitattributes
@@ -29,8 +35,13 @@
   algorithm = histogram
   colorMoved = default
   submodule = log
+  mnemonicPrefix = true
+  renames = true
 
 [fetch]
+  ; prune = true
+  ; pruneTags = true
+  ; all = true
   fsckObjects = true
 
 [filter "lfs"]
@@ -62,6 +73,10 @@
   followTags = true
   autoSetupRemote = true
 
+[rebase]
+  autoStash = true
+  updateRefs = true
+
 [receive]
   fsckObjects = true
 
@@ -71,6 +86,7 @@
 
 [tag]
   gpgSign = true
+  sort = version:refname
 
 [transfer]
   fsckObjects = true
@@ -143,3 +159,7 @@
   syntax-theme = gruvbox-dark
   whitespace-error-style = "#FB4934" reverse
   zero-style = dim syntax
+
+[rerere]
+	enabled = true
+	autoupdate = true
