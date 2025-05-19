@@ -169,3 +169,40 @@ end
 if test -d $HOME/.fly
   fish_add_path $HOME/.fly/bin
 end
+
+set --universal fish_should_add_to_history_patterns \
+  'ACCESS_KEY' \
+  'ACCESS_TOKEN' \
+  'API_KEY' \
+  'API_TOKEN' \
+  'AWS_' \
+  'B2_ACCOUNT_ID' \
+  'B2_ACCOUNT_KEY' \
+  'B2_BUCKET_NAME' \
+  'CLOUDFLARE_API_TOKEN' \
+  'CONSUL_HTTP_TOKEN' \
+  'CONTAINER_REGISTRY_TOKEN' \
+  'DUOSECURITY' \
+  'DUO_' \
+  'GITHUB_TOKEN' \
+  'NOMAD_TOKEN' \
+  'NPM_TOKEN' \
+  'PASSWORD' \
+  'SECRET' \
+  'SECRET_KEY' \
+  'SESSION_KEYS_' \
+  'TF_VAR_' \
+  'VAGRANT_ACCESS_TOKEN' \
+  'VAULT_' \
+  '^vault' \
+  '^fly secrets'
+
+function fish_should_add_to_history
+  for pattern in $fish_should_add_to_history_patterns
+    if string match --regex --quiet $pattern -- $argv
+      return 1
+    end
+  end
+
+  return 0
+end
