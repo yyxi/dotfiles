@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env fish
 #
 # Extracts the contents of archives.
 #
@@ -6,106 +6,123 @@
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 
-# function unarchive {
+set remove_archive 1
+set success 0
+set file_name ""
+set file_path ""
+set extract_dir ""
+set _gzip_bin ""
+set _bzip2_bin ""
+set _xz_bin ""
+set _zstd_bin ""
 
-local remove_archive
-local success
-local file_name
-local file_path
-local extract_dir
-local _gzip_bin _bzip2_bin _xz_bin _zstd_bin
-
-if (( $# == 0 )); then
-  cat >&2 <<EOF
-usage: $0 [-option] [file ...]
+if test (count $argv) -eq 0
+    echo "usage: unarchive [-option] [file ...]
 
 options:
     -r, --remove    remove archive
+" >&2
+    return 1
+end
 
-EOF
-fi
+set remove_archive 1
+if test "$argv[1]" = -r; or test "$argv[1]" = --remove
+    set remove_archive 0
+    set argv $argv[2..-1]
+end
 
-remove_archive=1
-if [[ "$1" == "-r" || "$1" == "--remove" ]]; then
-  remove_archive=0
-  shift
-fi
-
-# here, we check for dropin/multi-threaded replacements
-# this should eventually be moved to modules/archive/init.zsh
-# as a global alias
-if (( $+commands[pigz] )); then
-  _gzip_bin='pigz'
+# Check for dropin/multi-threaded replacements
+if command -v pigz >/dev/null
+    set _gzip_bin pigz
 else
-  _gzip_bin='gzip'
-fi
+    set _gzip_bin gzip
+end
 
-if (( $+commands[pixz] )); then
-  _xz_bin='pixz'
+if command -v pixz >/dev/null
+    set _xz_bin pixz
 else
-  _xz_bin='xz'
-fi
+    set _xz_bin xz
+end
 
-if (( $+commands[lbzip2] )); then
-  _bzip2_bin='lbzip2'
-elif (( $+commands[pbzip2] )); then
-  _bzip2_bin='pbzip2'
+if command -v lbzip2 >/dev/null
+    set _bzip2_bin lbzip2
+else if command -v pbzip2 >/dev/null
+    set _bzip2_bin pbzip2
 else
-  _bzip2_bin='bzip2'
-fi
+    set _bzip2_bin bzip2
+end
 
-_zstd_bin='zstd'
+set _zstd_bin zstd
 
-while (( $# > 0 )); do
-  if [[ ! -s "$1" ]]; then
-    print "$0: file not valid: $1" >&2
-    shift
-    continue
-  fi
+for file in $argv
+    if not test -s "$file"
+        echo "unarchive: file not valid: $file" >&2
+        continue
+    end
 
-  success=0
-  file_name="${1:t}"
-  file_path="${1:A}"
-  extract_dir="${file_name:r}"
-  case "$1:l" in
-    (*.tar.gz|*.tgz) tar -xvf "$1" --use-compress-program="${_gzip_bin}" ;;
-    (*.tar.bz2|*.tbz|*.tbz2) tar -xvf "$1" --use-compress-program="${_bzip2_bin}" ;;
-    (*.tar.xz|*.txz) tar -xvf "$1" --use-compress-program="${_xz_bin}" ;;
-    (*.tar.zma|*.tlz) tar --lzma --help &> /dev/null \
-      && tar --lzma -xvf "$1" \
-      || lzcat "$1" | tar -xvf - ;;
-    (*.tar.zst|*.tzst) tar -xvf "$1" --use-compress-program="${_zstd_bin}" ;;
-    (*.tar) tar -xvf "$1" ;;
-    (*.gz) gunzip "$1" ;;
-    (*.bz2) bunzip2 "$1" ;;
-    (*.xz) unxz "$1" ;;
-    (*.lzma) unlzma "$1" ;;
-    (*.Z) uncompress "$1" ;;
-    (*.zip|*.jar) unzip "$1" -d $extract_dir ;;
-    (*.rar) ( (( $+commands[unrar] )) \
-      && unrar x -ad "$1" ) \
-      || ( (( $+commands[rar] )) \
-      && rar x -ad "$1" ) \
-      || unar -d "$1" ;;
-    (*.7z) 7za x "$1" ;;
-    (*.deb)
-      mkdir -p "$extract_dir/control"
-      mkdir -p "$extract_dir/data"
-      cd "$extract_dir"; ar vx "${file_path}" > /dev/null
-      cd control; tar xvf ../control.tar.*
-      cd ../data; tar xvf ../data.tar.*
-      cd ..; rm control.tar.* data.tar.* debian-binary
-      cd ..
-    ;;
-    (*)
-      print "$0: cannot extract: $1" >&2
-      success=1
-    ;;
-  esac
+    set success 0
+    set file_name (basename "$file")
+    set file_path (realpath "$file")
+    set extract_dir (string replace -r '\.[^.]*$' '' "$file_name")
 
-  (( success = $success > 0 ? $success : $? ))
-  (( $success == 0 )) && (( $remove_archive == 0 )) && rm "$1"
-  shift
-done
+    switch (string lower "$file")
+        case "*.tar.gz" "*.tgz"
+            tar -xvf "$file" --use-compress-program="$_gzip_bin"
+        case "*.tar.bz2" "*.tbz" "*.tbz2"
+            tar -xvf "$file" --use-compress-program="$_bzip2_bin"
+        case "*.tar.xz" "*.txz"
+            tar -xvf "$file" --use-compress-program="$_xz_bin"
+        case "*.tar.lzma" "*.tlz"
+            if tar --lzma --help &>/dev/null
+                tar --lzma -xvf "$file"
+            else
+                lzcat "$file" | tar -xvf -
+            end
+        case "*.tar.zst" "*.tzst"
+            tar -xvf "$file" --use-compress-program="$_zstd_bin"
+        case "*.tar"
+            tar -xvf "$file"
+        case "*.gz"
+            gunzip "$file"
+        case "*.bz2"
+            bunzip2 "$file"
+        case "*.xz"
+            unxz "$file"
+        case "*.lzma"
+            unlzma "$file"
+        case "*.Z"
+            uncompress "$file"
+        case "*.zip" "*.jar"
+            unzip "$file" -d "$extract_dir"
+        case "*.rar"
+            if command -v unrar >/dev/null
+                unrar x -ad "$file"
+            else if command -v rar >/dev/null
+                rar x -ad "$file"
+            else
+                unar -d "$file"
+            end
+        case "*.7z"
+            7z x "$file" -o"$extract_dir"
+        case "*.deb"
+            mkdir -p "$extract_dir/control"
+            mkdir -p "$extract_dir/data"
+            cd "$extract_dir"
+            ar vx "$file_path" >/dev/null
+            cd control
+            tar xvf ../control.tar.*
+            cd ../data
+            tar xvf ../data.tar.*
+            cd ..
+            rm control.tar.* data.tar.* debian-binary
+            cd ..
+        case "*"
+            echo "unarchive: cannot extract: $file" >&2
+            set success 1
+    end
 
-# }
+    set success (math "max($success, $status)")
+    if test $success -eq 0; and test $remove_archive -eq 0
+        rm "$file"
+    end
+end
