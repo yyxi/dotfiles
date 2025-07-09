@@ -22,9 +22,11 @@ font-family = Iosevka Term SS17
 font-family-bold = Iosevka Term SS17 Bold
 font-family-italic = Iosevka Term SS17 Italic
 font-family-bold-italic = Iosevka Term SS17 Bold Italic
+font-feature = +calt, +ccmp, +lnum, +zero, +mark, +mkmk, +JSPT, +SWFT, +HSKL, +VRLG, +CLIK
 font-synthetic-style = false
 font-thicken = true
 font-size = 14
+adjust-cell-height = 2.5%
 adjust-underline-position = 4
 adjust-underline-thickness = 60%
 
