@@ -1,0 +1,39 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "plan",
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Bash(chmod:*)",
+      "Bash(chown:*)",
+      "Bash(sudo:*)",
+      "Read(**/.aws/**)",
+      "Read(**/.terraform/**)",
+      "Read(*.agekey)",
+      "Read(*.asc)",
+      "Read(*.cer)",
+      "Read(*.crt)",
+      "Read(*.der)",
+      "Read(*.env*)",
+      "Read(*.gpg)",
+      "Read(*.jks)",
+      "Read(*.kdbx)",
+      "Read(*.key)",
+      "Read(*.keystore)",
+      "Read(*.p12)",
+      "Read(*.pem)",
+      "Read(*.pfx)",
+      "Read(*.sops.yaml)",
+      "Read(*.tfstate*)",
+      "Read(*.tfvars)",
+      "Read(.npmrc)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_BUG_COMMAND": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_TELEMETRY": "1"
+  }
+}
