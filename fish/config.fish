@@ -170,6 +170,11 @@ if test -d $HOME/.fly
   fish_add_path $HOME/.fly/bin
 end
 
+if test -d $HOME/.bun
+  set --export BUN_INSTALL "$HOME/.bun"
+  fish_add_path $BUN_INSTALL/bin
+end
+
 set --universal fish_should_add_to_history_patterns \
   'ACCESS_KEY' \
   'ACCESS_TOKEN' \

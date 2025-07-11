@@ -3,6 +3,7 @@
   "permissions": {
     "defaultMode": "plan",
     "disableBypassPermissionsMode": "disable",
+    "allow": ["Read(~/.claude/*.md)", "Edit(~/.claude/*.md)"],
     "deny": [
       "Bash(chmod:*)",
       "Bash(chown:*)",
