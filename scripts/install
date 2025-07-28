@@ -31,5 +31,15 @@ main() {
     fi
 
     _ runcoms install "${HOME}"/.dotfiles/runcoms
+
+    if [[ ! -d "${HOME}/.dotfiles/vendor/context-engineering" ]]; then
+      if git clone git@github.com:yyxi/context-engineering.git "${HOME}/.dotfiles/vendor/context-engineering" &>/dev/null; then
+        true
+      fi
+    fi
+
+    if [[ -d "${HOME}/.dotfiles/vendor/context-engineering" ]]; then
+      _ runcoms install "${HOME}"/.dotfiles/vendor/context-engineering/lib
+    fi
   fi
 }
