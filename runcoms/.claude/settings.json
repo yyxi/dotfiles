@@ -1,9 +1,17 @@
 {
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_BUG_COMMAND": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_TELEMETRY": "1"
+  },
   "includeCoAuthoredBy": false,
   "permissions": {
-    "defaultMode": "plan",
-    "disableBypassPermissionsMode": "disable",
-    "allow": ["Read(~/.claude/*.md)", "Edit(~/.claude/*.md)"],
+    "allow": [
+      "Read(~/.claude/*.md)",
+      "Edit(~/.claude/*.md)"
+    ],
     "deny": [
       "Bash(chmod:*)",
       "Bash(chown:*)",
@@ -28,13 +36,11 @@
       "Read(*.tfstate*)",
       "Read(*.tfvars)",
       "Read(.npmrc)"
-    ]
+    ],
+    "defaultMode": "plan",
+    "disableBypassPermissionsMode": "disable"
   },
-  "env": {
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "DISABLE_AUTOUPDATER": "1",
-    "DISABLE_BUG_COMMAND": "1",
-    "DISABLE_ERROR_REPORTING": "1",
-    "DISABLE_TELEMETRY": "1"
+  "feedbackSurveyState": {
+    "lastShownTime": 1754337076986
   }
 }
