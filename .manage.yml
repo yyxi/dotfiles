@@ -11,28 +11,28 @@ env:
   # https://github.com/dandavison/delta
   DELTA_VERSION: 0.18.2
   # https://github.com/sharkdp/fd
-  FD_VERSION: 10.2.0
+  FD_VERSION: 10.3.0
   # https://github.com/junegunn/fzf
-  FZF_VERSION: 0.62.0
+  FZF_VERSION: 0.66.0
   # https://github.com/antonmedv/fx
-  FX_VERSION: 35.0.0
+  FX_VERSION: 39.1.0
   # https://github.com/grafana/k6
   K6_VERSION: 0.55.0
   # https://github.com/restic/restic
-  RESTIC_VERSION: 0.18.0
+  RESTIC_VERSION: 0.18.1
   # https://github.com/caarlos0/svu
-  SVU_VERSION: 3.2.3
+  SVU_VERSION: 3.2.4
   # https://github.com/antonmedv/walk
   WALK_VERSION: 1.13.0
   # https://github.com/ajeetdsouza/zoxide
-  ZOXIDE_VERSION: 0.9.7
+  ZOXIDE_VERSION: 0.9.8
   # https://github.com/triyanox/lla
   LLA_VERSION: 0.2.10
   # https://github.com/getsops/sops
-  SOPS_VERSION: 3.10.2
+  SOPS_VERSION: 3.11.0
   # https://github.com/sigstore/cosign
-  COSIGN_VERSION: 2.5.0
+  COSIGN_VERSION: 3.0.2
   # https://github.com/FiloSottile/age
   AGE_VERSION: 1.2.1
   # https://github.com/Wilfred/difftastic/
-  DIFFT_VERSION: 0.63.0
+  DIFFT_VERSION: 0.65.0
