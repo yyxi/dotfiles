@@ -8,20 +8,20 @@ cursor-text = #1d2021
 cursor-style-blink = true
 mouse-hide-while-typing = false
 
-scrollback-limit = 50000
+scrollback-limit = 100000000
 window-inherit-font-size = true
 window-colorspace = display-p3
 window-new-tab-position = end
 copy-on-select = clipboard
 shell-integration = fish
-shell-integration-features = true
+shell-integration-features = cursor, title, sudo, ssh-env
 macos-auto-secure-input = true
 macos-secure-input-indication = true
 
 font-family = Iosevka Term SS17
-font-family-bold = Iosevka Term SS17 Bold
+font-family-bold = Iosevka Term SS17 Semibold
 font-family-italic = Iosevka Term SS17 Italic
-font-family-bold-italic = Iosevka Term SS17 Bold Italic
+font-family-bold-italic = Iosevka Term SS17 Semibold Italic
 font-feature = +calt, +ccmp, +lnum, +zero, +mark, +mkmk, +JSPT, +SWFT, +HSKL, +VRLG, +CLIK
 font-synthetic-style = false
 font-thicken = true

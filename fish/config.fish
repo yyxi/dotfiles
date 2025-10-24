@@ -148,10 +148,8 @@ end
 
 if test -n "$SSH_CLIENT" && test -n "$SSH_TTY"
   true
-else
-  if type -q kitten && [ "$TERM" = "xterm-kitty" ]
-    alias ssh="kitten ssh"
-  end
+else if type -q kitten && [ "$TERM" = "xterm-kitty" ]
+  alias ssh="kitten ssh"
 end
 
 if test -f $HOME/.config/op/plugins.sh
@@ -173,6 +171,10 @@ end
 if test -d $HOME/.bun
   set --export BUN_INSTALL "$HOME/.bun"
   fish_add_path $BUN_INSTALL/bin
+end
+
+if test -d $HOME/.orbstack
+  source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end
 
 set --universal fish_should_add_to_history_patterns \
@@ -211,3 +213,4 @@ function fish_should_add_to_history
 
   return 0
 end
+
