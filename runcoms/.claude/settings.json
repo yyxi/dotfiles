@@ -1,5 +1,7 @@
 {
   "env": {
+    "FORCE_COLOR": "0",
+    "NO_COLOR": "1",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "DISABLE_AUTOUPDATER": "1",
     "DISABLE_BUG_COMMAND": "1",
@@ -9,6 +11,7 @@
   "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
+      "WebSearch",
       "Read(~/.claude/*.md)",
       "Edit(~/.claude/*.md)"
     ],
@@ -40,6 +43,7 @@
     "defaultMode": "plan",
     "disableBypassPermissionsMode": "disable"
   },
+  "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
   }
