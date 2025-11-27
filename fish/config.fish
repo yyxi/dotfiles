@@ -177,6 +177,10 @@ if test -d $HOME/.orbstack
   source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end
 
+if test -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+end
+
 set --universal fish_should_add_to_history_patterns \
   'ACCESS_KEY' \
   'ACCESS_TOKEN' \
