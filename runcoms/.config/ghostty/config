@@ -46,3 +46,4 @@ palette = 12=#83a597
 palette = 13=#d3859a
 palette = 14=#8ec07b
 palette = 15=#ebdbb2
+keybind = shift+enter=text:\x1b\r
