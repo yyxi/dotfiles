@@ -152,6 +152,10 @@ else if type -q kitten && [ "$TERM" = "xterm-kitty" ]
   alias ssh="kitten ssh"
 end
 
+if [ "$TERM_PROGRAM" = "ghostty" ]
+  set -gx TERM xterm-ghostty
+end
+
 if test -f $HOME/.config/op/plugins.sh
   source $HOME/.config/op/plugins.sh
 end
