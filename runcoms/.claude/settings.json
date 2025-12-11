@@ -13,7 +13,9 @@
     "allow": [
       "WebSearch",
       "Read(~/.claude/*.md)",
-      "Edit(~/.claude/*.md)"
+      "Edit(~/.claude/*.md)",
+      "Read(~/.context-engineering/*.md)",
+      "Edit(~/.context-engineering/*.md)"
     ],
     "deny": [
       "Bash(chmod:*)",
