@@ -181,8 +181,16 @@ if test -d $HOME/.orbstack
   source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end
 
+if test -d $HOME/.elan
+  source $HOME/.elan/env
+end
+
 if test -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+end
+
+if test -f "/Applications/VLC.app/Contents/MacOS/VLC"
+  alias vlc='/Applications/VLC.app/Contents/MacOS/VLC'
 end
 
 set --universal fish_should_add_to_history_patterns \
