@@ -28,6 +28,7 @@
 .com.apple.timemachine.donotpresent
 .fseventsd
 .fuse_hidden*
+.lake
 .manage_modules
 .nfs*
 .pytest_cache
