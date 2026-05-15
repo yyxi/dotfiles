@@ -45,7 +45,9 @@
     "defaultMode": "plan",
     "disableBypassPermissionsMode": "disable"
   },
+  "model": "opus",
   "alwaysThinkingEnabled": true,
+  "effortLevel": "medium",
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
   }
