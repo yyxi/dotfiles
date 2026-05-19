@@ -74,7 +74,6 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "SHA256SUMS"},
     },
     "gh": {
-        "default": True,
         "tag": "v2.92.0",
         "commit": "6c470f60803784e1558b626022677c53dccb6016",
         "repository": "cli/cli",
@@ -113,7 +112,6 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "restic": {
-        "default": True,
         "tag": "v0.18.1",
         "commit": "7d0aa7f2e30546fba7c8f1c0bae4d6704e3d8423",
         "repository": "restic/restic",
@@ -263,7 +261,6 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "fx": {
-        "default": True,
         "tag": "39.2.0",
         "commit": "c8fd8cf394083141ab912f604d332e1cfde830cb",
         "repository": "antonmedv/fx",
