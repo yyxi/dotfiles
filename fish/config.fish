@@ -60,7 +60,7 @@ if status is-interactive
 end
 
 if type -q tmux
-  alias tmux="~/.dotfiles/scripts/tmux/_tmux"
+  alias tmux="~/.dotfiles/tmux/tmux"
 end
 
 if type -q nvim
