@@ -1,0 +1,14 @@
+diff --git a/git/gitconfig b/git/gitconfig
+--- a/git/gitconfig
++++ b/git/gitconfig
+@@ -104,10 +104,6 @@
+   pushInsteadOf = "git://gist.github.com/"
+   pushInsteadOf = "https://gist.github.com/"
+ 
+-[user]
+-  email = 178086254+yyxi@users.noreply.github.com
+-  name = yyxi
+-
+ [gpg "ssh"]
+   defaultKeyCommand = ssh-add -L
+ 

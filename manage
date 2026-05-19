@@ -1112,6 +1112,31 @@ def run_command(
         )
 
 
+def command_output(
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+    env: Optional[Mapping[str, str]] = None,
+) -> str:
+    try:
+        return subprocess.check_output(
+            list(command),
+            cwd=str(cwd) if cwd else None,
+            env=dict(env) if env is not None else sanitized_environment(),
+            stderr=subprocess.PIPE,
+            text=True,
+        ).strip()
+    except subprocess.CalledProcessError as exc:
+        stderr = exc.stderr.strip() if isinstance(exc.stderr, str) else ""
+        detail = ": {0}".format(stderr) if stderr else ""
+        raise fatal(
+            "command failed with exit code {0}: {1}{2}".format(
+                exc.returncode, " ".join(command), detail
+            )
+        )
+    except OSError as exc:
+        raise fatal("unable to run {0}: {1}".format(command[0], exc))
+
+
 def check_external_tools(tools: Iterable[str]) -> None:
     missing = sorted({tool for tool in tools if shutil.which(tool) is None})
     if missing:
@@ -1724,6 +1749,74 @@ def clean_runcoms(paths: InstallPaths, source_dir: Path) -> None:
             target.unlink()
 
 
+def git_command_output(
+    paths: InstallPaths,
+    args: Sequence[str],
+    env: Optional[Mapping[str, str]] = None,
+) -> str:
+    return command_output(["git", *args], cwd=paths.repository, env=env)
+
+
+def run_git_command(
+    paths: InstallPaths,
+    args: Sequence[str],
+    env: Optional[Mapping[str, str]] = None,
+    stdout: Optional[Any] = None,
+) -> None:
+    run_command(["git", *args], cwd=paths.repository, env=env, stdout=stdout)
+
+
+def apply_whitelabel_patch(paths: InstallPaths) -> None:
+    check_external_tools(["git"])
+    trunk = git_command_output(
+        paths, ["rev-parse", "--verify", "refs/heads/trunk^{commit}"]
+    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp = Path(temp_dir)
+        index = temp / "index"
+        config = temp / "gitconfig"
+        patch = temp / "whitelabel.patch"
+        message = temp / "message"
+        with config.open("wb") as output:
+            run_git_command(
+                paths, ["show", "{0}:git/gitconfig".format(trunk)], stdout=output
+            )
+        with patch.open("wb") as output:
+            run_git_command(
+                paths,
+                ["show", "{0}:git/whitelabel.patch".format(trunk)],
+                stdout=output,
+            )
+        message.write_text("Apply whitelabel git config\n", encoding="utf-8")
+        env = sanitized_environment()
+        env["GIT_INDEX_FILE"] = str(index)
+        run_git_command(paths, ["read-tree", "{0}^{{tree}}".format(trunk)], env=env)
+        run_git_command(
+            paths,
+            ["apply", "--cached", "--whitespace=nowarn", str(patch)],
+            env=env,
+        )
+        tree = git_command_output(paths, ["write-tree"], env=env)
+        commit_env = sanitized_environment()
+        commit_env["GIT_CONFIG_GLOBAL"] = str(config)
+        commit = git_command_output(
+            paths,
+            ["commit-tree", "-S", tree, "-p", trunk, "-F", str(message)],
+            env=commit_env,
+        )
+    run_git_command(
+        paths,
+        [
+            "update-ref",
+            "-m",
+            "apply whitelabel patch",
+            "refs/heads/whitelabel",
+            commit,
+        ],
+    )
+    info("whitelabel now points to {0}".format(commit))
+
+
 def install_context_engineering(paths: InstallPaths, explicit: bool) -> None:
     if not paths.is_canonical():
         raise fatal(
@@ -1947,6 +2040,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install_parser.add_argument("name", nargs="?", help="optional tool name to install")
     subparsers.add_parser("clean", help="clean runcom symlinks")
+    subparsers.add_parser(
+        "whitelabel", help="force whitelabel to trunk plus the saved patch"
+    )
 
     restic_parser = subparsers.add_parser("restic", help="run restic operations")
     restic_subparsers = restic_parser.add_subparsers(
@@ -1990,11 +2086,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     try:
         install_signal_handlers()
         paths = InstallPaths(repository=repository_dir(), home=home_dir())
-        platform = current_platform()
         tools = TOOLS
         parser = build_parser()
         args = parser.parse_args(argv)
         if args.command == "install":
+            platform = current_platform()
             if args.name == "context-engineering":
                 if args.offline:
                     warn("offline install; skipping context-engineering clone")
@@ -2010,7 +2106,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.command == "clean":
             clean(paths)
             return 0
+        if args.command == "whitelabel":
+            apply_whitelabel_patch(paths)
+            return 0
         if args.command == "restic":
+            platform = current_platform()
             if args.restic_command == "init":
                 restic_init(paths, platform, tools, args.bucket, args.connections)
                 return 0
