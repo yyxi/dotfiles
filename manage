@@ -170,8 +170,8 @@ TOOL_CONFIGS = {
     },
     "fd": {
         "default": True,
-        "tag": "v10.4.2",
-        "commit": "7027d45303b412be6fa9c09d689cc6276748fb38",
+        "tag": "v10.3.0",
+        "commit": "d38148f0aabdd073b4080cde770f679f3197b920",
         "repository": "sharkdp/fd",
         "assets": {
             "linux_amd64": "fd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -185,8 +185,8 @@ TOOL_CONFIGS = {
     },
     "delta": {
         "default": True,
-        "tag": "0.19.2",
-        "commit": "1502986e81c8e3fa27bfb5b84bac6b281a6b1edd",
+        "tag": "0.18.2",
+        "commit": "a589ff9debaefdd3992384434120f5a03a103481",
         "repository": "dandavison/delta",
         "assets": {
             "linux_amd64": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
