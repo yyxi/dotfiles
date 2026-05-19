@@ -1787,7 +1787,7 @@ def apply_whitelabel_patch(paths: InstallPaths) -> None:
                 ["show", "{0}:git/whitelabel.patch".format(trunk)],
                 stdout=output,
             )
-        message.write_text("Apply whitelabel git config\n", encoding="utf-8")
+        message.write_text("fix: apply whitelabel git config\n", encoding="utf-8")
         env = sanitized_environment()
         env["GIT_INDEX_FILE"] = str(index)
         run_git_command(paths, ["read-tree", "{0}^{{tree}}".format(trunk)], env=env)
