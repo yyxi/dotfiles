@@ -331,6 +331,73 @@ TOOL_CONFIGS = {
         },
         "dependencies": ("fetch", "cosign"),
     },
+    "sfw": {
+        "tag": "v1.10.0",
+        "commit": "164c32dcbe3bbebcc0b091fd6a31ff93883545b2",
+        "repository": "SocketDev/sfw-free",
+        "assets": {
+            "linux_amd64": "sfw-free-linux-x86_64",
+            "linux_arm64": "sfw-free-linux-arm64",
+            "darwin_amd64": "sfw-free-macos-x86_64",
+            "darwin_arm64": "sfw-free-macos-arm64",
+        },
+        "binaries": ("sfw",),
+        "dependencies": ("fetch",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for these unsigned binaries",
+    },
+    "dockerfile-tools": {
+        "tag": "v0.5.0",
+        "commit": "038768cf5179e7c86e7a2721dc638286a3c4c56a",
+        "repository": "escapace/dockerfile-tools",
+        "assets": {
+            "linux_amd64": "dockerfile-tools_{version}_linux_amd64.tar.gz",
+            "linux_arm64": "dockerfile-tools_{version}_linux_arm64.tar.gz",
+            "darwin_amd64": "dockerfile-tools_{version}_darwin_amd64.tar.gz",
+            "darwin_arm64": "dockerfile-tools_{version}_darwin_arm64.tar.gz",
+        },
+        "binaries": ("dockerfile-tools",),
+        "checksum": {
+            "asset_name": "checksums.txt",
+            "sigstore_bundle_name": "checksums.txt.sigstore.json",
+            "bundle_identity": "https://github.com/escapace/dockerfile-tools/.github/workflows/release.yaml@refs/tags/v0.5.0",
+            "bundle_issuer": "https://token.actions.githubusercontent.com",
+            "verify_sigstore": True,
+        },
+        "dependencies": ("fetch", "cosign"),
+        "tag_object": "ea3c43991a4fa17edb0056471c0c662aad048484",
+        "signature": {"tag": "required"},
+    },
+    "gdu": {
+        "tag": "v5.36.1",
+        "commit": "8d64b4f1ef50bf6694cd17e060f9fd80aed3e297",
+        "repository": "dundee/gdu",
+        "assets": {
+            "linux_amd64": "gdu_linux_amd64.tgz",
+            "linux_arm64": "gdu_linux_arm64.tgz",
+            "darwin_amd64": "gdu_darwin_amd64.tgz",
+            "darwin_arm64": "gdu_darwin_arm64.tgz",
+        },
+        "binaries": (
+            {
+                "name": "gdu",
+                "sources": {
+                    "linux_amd64": "gdu_linux_amd64",
+                    "linux_arm64": "gdu_linux_arm64",
+                    "darwin_amd64": "gdu_darwin_amd64",
+                    "darwin_arm64": "gdu_darwin_arm64",
+                },
+            },
+        ),
+        "checksum": {"asset_name": "sha256sums.txt"},
+        "dependencies": ("fetch",),
+        "tag_object": "c6dbf0e669dd68598522f52b4f623e73823c15ea",
+        "signature": {
+            "tag": "required",
+            "commit": {
+                "allow_unsigned": "release is signed by the annotated tag; commit itself is unsigned",
+            },
+        },
+    },
     "k6": {
         "tag": "v2.0.0",
         "commit": "8c3be52cc17dee055c9e8757a66fb97d946dd248",
@@ -1330,7 +1397,7 @@ def extract_archive(kind: str, archive: Path, extract_dir: Path) -> None:
 
 
 def install_kind_for_asset(asset: str) -> str:
-    if asset.endswith(".tar.gz"):
+    if asset.endswith((".tar.gz", ".tgz")):
         return "tar.gz"
     if asset.endswith(".zip"):
         return "zip"
