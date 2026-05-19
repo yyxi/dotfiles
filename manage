@@ -40,6 +40,8 @@ CANONICAL_REPOSITORY = ".dotfiles"
 CONTEXT_ENGINEERING_REPOSITORY = "git@github.com:yyxi/context-engineering.git"
 MAX_AUTOMATIC_RATE_LIMIT_SLEEP_SECONDS = 300
 RATE_LIMIT_LOW_WARNED = False
+RESTIC_EXCLUDE_FILE = Path("restic") / "exclude.txt"
+RESTIC_DEFAULT_B2_CONNECTIONS = 100
 
 # Tool asset names are explicit for the only supported platforms:
 # linux_amd64, linux_arm64, darwin_amd64, and darwin_arm64.
@@ -1034,13 +1036,14 @@ def run_command(
     cwd: Optional[Path] = None,
     stdout: Optional[Any] = None,
     stderr: Optional[Any] = None,
+    env: Optional[Mapping[str, str]] = None,
 ) -> None:
     process: Any = None
     try:
         process = subprocess.Popen(
             list(command),
             cwd=str(cwd) if cwd else None,
-            env=sanitized_environment(),
+            env=dict(env) if env is not None else sanitized_environment(),
             stdout=stdout,
             stderr=stderr,
             start_new_session=True,
@@ -1751,6 +1754,133 @@ def clean(paths: InstallPaths) -> None:
     clean_runcoms(paths, paths.repository / "runcoms")
 
 
+def required_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise fatal("{0} environment variable not set".format(name))
+    return value
+
+
+def restic_repository_url(bucket: str) -> str:
+    if not bucket:
+        raise fatal("restic bucket must not be empty")
+    return "b2:{0}:/".format(bucket)
+
+
+def restic_connection_option(connections: int) -> str:
+    if connections < 1:
+        raise fatal("restic connections must be at least 1")
+    return "b2.connections={0}".format(connections)
+
+
+def ensure_restic_installed(
+    paths: InstallPaths, platform: Platform, tools: Mapping[str, Tool]
+) -> Path:
+    install_tool_names(paths, platform, tools, ["restic"])
+    binary = paths.bin / "restic"
+    if not binary.exists():
+        raise fatal("restic install did not create {0}".format(binary))
+    return binary
+
+
+def restic_environment() -> Dict[str, str]:
+    env = sanitized_environment()
+    for name in ("B2_ACCOUNT_ID", "B2_ACCOUNT_KEY", "B2_BUCKET_NAME"):
+        env.pop(name, None)
+    env["B2_ACCOUNT_ID"] = required_env("RESTIC_B2_ACCOUNT_ID")
+    env["B2_ACCOUNT_KEY"] = required_env("RESTIC_B2_ACCOUNT_KEY")
+    return env
+
+
+def run_restic(
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    restic_args: Sequence[str],
+    cwd: Optional[Path] = None,
+) -> None:
+    binary = ensure_restic_installed(paths, platform, tools)
+    run_command([str(binary), *restic_args], cwd=cwd, env=restic_environment())
+
+
+def restic_init(
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    bucket: str,
+    connections: int,
+) -> None:
+    run_restic(
+        paths,
+        platform,
+        tools,
+        [
+            "init",
+            "-o",
+            restic_connection_option(connections),
+            "-r",
+            restic_repository_url(bucket),
+        ],
+    )
+
+
+def restic_backup(
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    source: Path,
+    bucket: str,
+    connections: int,
+) -> None:
+    if not source.is_dir():
+        raise fatal("restic backup source is not a directory: {0}".format(source))
+    exclude_file = paths.repository / RESTIC_EXCLUDE_FILE
+    if not exclude_file.is_file():
+        raise fatal("restic exclude file is missing: {0}".format(exclude_file))
+    run_restic(
+        paths,
+        platform,
+        tools,
+        [
+            "backup",
+            "--exclude-file",
+            str(exclude_file),
+            "-o",
+            restic_connection_option(connections),
+            "-r",
+            restic_repository_url(bucket),
+            ".",
+        ],
+        cwd=source,
+    )
+
+
+def restic_restore(
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    target: Path,
+    bucket: str,
+    snapshot: str,
+    connections: int,
+) -> None:
+    run_restic(
+        paths,
+        platform,
+        tools,
+        [
+            "restore",
+            "-r",
+            restic_repository_url(bucket),
+            snapshot,
+            "-o",
+            restic_connection_option(connections),
+            "--target",
+            str(target),
+        ],
+    )
+
+
 def raise_keyboard_interrupt(signum: int, frame: Optional[Any]) -> None:
     raise KeyboardInterrupt("received signal {0}".format(signum))
 
@@ -1762,12 +1892,62 @@ def install_signal_handlers() -> None:
             signal.signal(signum, raise_keyboard_interrupt)
 
 
+def add_restic_common_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--bucket",
+        required=True,
+        help="Backblaze B2 bucket name for the restic repository",
+    )
+    parser.add_argument(
+        "--connections",
+        type=int,
+        default=RESTIC_DEFAULT_B2_CONNECTIONS,
+        help="B2 connection count passed as -o b2.connections (default: %(default)s)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="manage")
     subparsers = parser.add_subparsers(dest="command", title="commands")
     install_parser = subparsers.add_parser("install", help="install tools and runcoms")
     install_parser.add_argument("name", nargs="?", help="optional tool name to install")
     subparsers.add_parser("clean", help="clean runcom symlinks")
+
+    restic_parser = subparsers.add_parser("restic", help="run restic operations")
+    restic_subparsers = restic_parser.add_subparsers(
+        dest="restic_command", title="restic commands"
+    )
+    restic_init_parser = restic_subparsers.add_parser(
+        "init", help="initialize the configured restic repository"
+    )
+    add_restic_common_options(restic_init_parser)
+
+    restic_backup_parser = restic_subparsers.add_parser(
+        "backup", help="back up a source directory with restic"
+    )
+    restic_backup_parser.add_argument(
+        "--path",
+        required=True,
+        type=Path,
+        help="directory to back up",
+    )
+    add_restic_common_options(restic_backup_parser)
+
+    restic_restore_parser = restic_subparsers.add_parser(
+        "restore", help="restore a restic snapshot"
+    )
+    restic_restore_parser.add_argument(
+        "--path",
+        required=True,
+        type=Path,
+        help="directory where restic restores files",
+    )
+    restic_restore_parser.add_argument(
+        "--snapshot",
+        default="latest",
+        help="snapshot ID or latest selector to restore (default: %(default)s)",
+    )
+    add_restic_common_options(restic_restore_parser)
     return parser
 
 
@@ -1789,6 +1969,28 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 0
         if args.command == "clean":
             clean(paths)
+            return 0
+        if args.command == "restic":
+            if args.restic_command == "init":
+                restic_init(paths, platform, tools, args.bucket, args.connections)
+                return 0
+            if args.restic_command == "backup":
+                restic_backup(
+                    paths, platform, tools, args.path, args.bucket, args.connections
+                )
+                return 0
+            if args.restic_command == "restore":
+                restic_restore(
+                    paths,
+                    platform,
+                    tools,
+                    args.path,
+                    args.bucket,
+                    args.snapshot,
+                    args.connections,
+                )
+                return 0
+            parser.parse_args(["restic", "--help"])
             return 0
         parser.print_help()
         return 0

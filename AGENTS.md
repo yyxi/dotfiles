@@ -11,6 +11,7 @@ non-obvious guidance for coding agents working on the root `manage` CLI. Do not 
 - Minimize GitHub API calls. Prefer deterministic release download URLs for assets, avoid proactive rate-limit polling, and keep signature checks expectation-driven.
 - Keep tag-signature and commit-signature policy separate. Signed annotated tags may be the release trust anchor even when the target commit is unsigned.
 - Archive handling must stay generic. Use metadata such as `install_layout`, binary source paths, and `strip_components`; do not add one-off extraction code for tools such as `nvim`.
+- Keep `manage restic` interactive: inherit standard input/output/error so restic can prompt for repository passwords instead of capturing or wrapping its terminal interaction.
 
 ### Known landmines and misleading patterns
 - `gruntwork-io/fetch` uses GitHub API calls for release asset downloads and fails immediately on unauthenticated rate limits. Do not route managed asset downloads through fetch unless that tradeoff is explicitly revisited.
