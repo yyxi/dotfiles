@@ -1534,9 +1534,18 @@ def prepare_checksum(
     return manifest_checksum(manifest, selected_asset)
 
 
-def install_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
+def install_tool(
+    paths: InstallPaths, platform: Platform, tool: Tool, offline: bool = False
+) -> None:
     if installed_state_ok(paths, tool, platform):
         info("{0} {1} already installed".format(tool.name, tool.version))
+        return
+    if offline:
+        warn(
+            "{0} {1} is not installed; skipping download".format(
+                tool.name, tool.version
+            )
+        )
         return
 
     install_regular_tool(paths, platform, tool)
@@ -1636,6 +1645,7 @@ def install_tool_names(
     platform: Platform,
     tools: Mapping[str, Tool],
     requested: Sequence[str],
+    offline: bool = False,
 ) -> None:
     canonical = []
     for name in requested:
@@ -1649,9 +1659,10 @@ def install_tool_names(
         canonical.append(resolved)
     ordered = resolved_install_order(canonical, tools)
     cleanup_stale_staging(paths, (tools[name] for name in ordered))
-    preflight_tools(paths, canonical, tools, platform)
+    if not offline:
+        preflight_tools(paths, canonical, tools, platform)
     for name in ordered:
-        install_tool(paths, platform, tools[name])
+        install_tool(paths, platform, tools[name], offline=offline)
 
 
 def runcom_files(source_dir: Path) -> List[Path]:
@@ -1742,9 +1753,12 @@ def install_context_engineering(paths: InstallPaths, explicit: bool) -> None:
 
 
 def install_default(
-    paths: InstallPaths, platform: Platform, tools: Mapping[str, Tool]
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    offline: bool = False,
 ) -> None:
-    install_tool_names(paths, platform, tools, list(DEFAULT_INSTALL))
+    install_tool_names(paths, platform, tools, list(DEFAULT_INSTALL), offline=offline)
     if not paths.is_canonical():
         warn(
             "not running from {0}; skipping runcom, fish, and context-engineering home changes".format(
@@ -1754,6 +1768,9 @@ def install_default(
         return
     backup_fish_if_needed(paths)
     install_runcoms(paths, paths.repository / "runcoms")
+    if offline:
+        warn("offline install; skipping context-engineering clone")
+        return
     install_context_engineering(paths, explicit=False)
 
 
@@ -1923,6 +1940,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="manage")
     subparsers = parser.add_subparsers(dest="command", title="commands")
     install_parser = subparsers.add_parser("install", help="install tools and runcoms")
+    install_parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="skip tool downloads and only relink already installed tools",
+    )
     install_parser.add_argument("name", nargs="?", help="optional tool name to install")
     subparsers.add_parser("clean", help="clean runcom symlinks")
 
@@ -1974,11 +1996,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args = parser.parse_args(argv)
         if args.command == "install":
             if args.name == "context-engineering":
-                install_context_engineering(paths, explicit=True)
+                if args.offline:
+                    warn("offline install; skipping context-engineering clone")
+                else:
+                    install_context_engineering(paths, explicit=True)
             elif args.name:
-                install_tool_names(paths, platform, tools, [args.name])
+                install_tool_names(
+                    paths, platform, tools, [args.name], offline=args.offline
+                )
             else:
-                install_default(paths, platform, tools)
+                install_default(paths, platform, tools, offline=args.offline)
             return 0
         if args.command == "clean":
             clean(paths)
