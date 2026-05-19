@@ -85,7 +85,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("gh",),
         "checksum": {"asset_name": "gh_{version}_checksums.txt"},
-        "dependencies": ("fetch",),
         "aliases": ("github-cli",),
     },
     "nvim": {
@@ -101,7 +100,6 @@ TOOL_CONFIGS = {
         "install_layout": "archive",
         "strip_components": 1,
         "binaries": ({"name": "nvim", "source": "bin/nvim"},),
-        "dependencies": ("fetch",),
         "tag_object": "2b6d81f1aef77614f49c206de5ec790ae50addfc",
         "signature": {
             "tag": "required",
@@ -123,7 +121,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("restic",),
         "checksum": {"asset_name": "SHA256SUMS"},
-        "dependencies": ("fetch",),
         "tag_object": "29446b0fd853b7765f652584ff90e817890ee389",
         "signature": {
             "tag": "required",
@@ -145,7 +142,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("fzf",),
         "checksum": {"asset_name": "fzf_{version}_checksums.txt"},
-        "dependencies": ("fetch",),
     },
     "svu": {
         "default": True,
@@ -166,7 +162,7 @@ TOOL_CONFIGS = {
             "bundle_issuer": "https://token.actions.githubusercontent.com",
             "verify_sigstore": True,
         },
-        "dependencies": ("fetch", "cosign"),
+        "dependencies": ("cosign",),
     },
     "fd": {
         "default": True,
@@ -180,7 +176,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "fd-v{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("fd",),
-        "dependencies": ("fetch",),
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "delta": {
@@ -195,7 +190,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "delta-{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("delta",),
-        "dependencies": ("fetch",),
         "aliases": ("git-delta",),
         "signature": {
             "commit": {
@@ -216,7 +210,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "difft-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("difft",),
-        "dependencies": ("fetch",),
         "aliases": ("difftastic",),
         "signature": {
             "commit": {
@@ -237,7 +230,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "zoxide-{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("zoxide",),
-        "dependencies": ("fetch",),
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -257,7 +249,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "walk_darwin_arm64",
         },
         "binaries": ("walk",),
-        "dependencies": ("fetch",),
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "fx": {
@@ -271,7 +262,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "fx_darwin_arm64",
         },
         "binaries": ("fx",),
-        "dependencies": ("fetch",),
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "age": {
@@ -285,7 +275,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "age-v{version}-darwin-arm64.tar.gz",
         },
         "binaries": ("age", "age-keygen"),
-        "dependencies": ("fetch",),
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -305,7 +294,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("cosign",),
         "checksum": {"asset_name": "cosign_checksums.txt"},
-        "dependencies": ("fetch",),
     },
     "sops": {
         "tag": "v3.13.1",
@@ -326,7 +314,7 @@ TOOL_CONFIGS = {
             "certificate_issuer": "https://token.actions.githubusercontent.com",
             "verify_sigstore": True,
         },
-        "dependencies": ("fetch", "cosign"),
+        "dependencies": ("cosign",),
     },
     "sfw": {
         "tag": "v1.10.0",
@@ -339,7 +327,6 @@ TOOL_CONFIGS = {
             "darwin_arm64": "sfw-free-macos-arm64",
         },
         "binaries": ("sfw",),
-        "dependencies": ("fetch",),
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for these unsigned binaries",
     },
     "dockerfile-tools": {
@@ -360,7 +347,7 @@ TOOL_CONFIGS = {
             "bundle_issuer": "https://token.actions.githubusercontent.com",
             "verify_sigstore": True,
         },
-        "dependencies": ("fetch", "cosign"),
+        "dependencies": ("cosign",),
         "tag_object": "ea3c43991a4fa17edb0056471c0c662aad048484",
         "signature": {"tag": "required"},
     },
@@ -386,7 +373,6 @@ TOOL_CONFIGS = {
             },
         ),
         "checksum": {"asset_name": "sha256sums.txt"},
-        "dependencies": ("fetch",),
         "tag_object": "c6dbf0e669dd68598522f52b4f623e73823c15ea",
         "signature": {
             "tag": "required",
@@ -407,7 +393,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("k6",),
         "checksum": {"asset_name": "k6-v{version}-checksums.txt"},
-        "dependencies": ("fetch",),
     },
 }
 
@@ -1554,33 +1539,7 @@ def install_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
         info("{0} {1} already installed".format(tool.name, tool.version))
         return
 
-    if tool.name == "fetch":
-        install_fetch(paths, platform, tool)
-    else:
-        install_regular_tool(paths, platform, tool)
-
-
-def install_fetch(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
-    selected_asset = asset_name(tool, platform)
-    info("installing {0} {1}".format(tool.name, tool.version))
-    verify_tag_and_commit(tool)
-
-    with staging_directory(paths, tool) as stage:
-        work = stage / "work"
-        install_dir = stage / "install"
-        work.mkdir(parents=True)
-        install_dir.mkdir(parents=True)
-        checksum = prepare_checksum(paths, tool, selected_asset, work)
-        if checksum is None:
-            raise fatal("fetch bootstrap requires SHA-256 verification")
-        downloaded = work / selected_asset
-        download_release_asset(tool, selected_asset, downloaded)
-        verify_tag_and_commit(tool, check_signature=False)
-        verify_file_sha256(downloaded, checksum)
-        install_downloaded_asset(tool, platform, downloaded, install_dir, work)
-        write_version_file(install_dir / "version", version_data(tool, selected_asset))
-        replace_tool_directory(paths, tool, install_dir)
-    ensure_tool_links(paths, tool, platform)
+    install_regular_tool(paths, platform, tool)
 
 
 def install_regular_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
@@ -1594,18 +1553,8 @@ def install_regular_tool(paths: InstallPaths, platform: Platform, tool: Tool) ->
         install_dir = stage / "install"
         work.mkdir(parents=True)
         install_dir.mkdir(parents=True)
-        if tool.checksum is None:
-            reason = tool.missing_checksum_exception
-            if not reason:
-                raise fatal("{0} has no checksum manifest configured".format(tool.name))
-            warn(
-                "{0}: accepting missing checksum manifest: {1}".format(
-                    tool.name, reason
-                )
-            )
-            checksum = None
-        else:
-            checksum = prepare_checksum(paths, tool, selected_asset, work)
+        checksum = prepare_checksum(paths, tool, selected_asset, work)
+        if checksum is not None:
             verify_tag_and_commit(tool, check_signature=False)
         downloaded = downloads / selected_asset
         downloads.mkdir(parents=True, exist_ok=True)
