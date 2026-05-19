@@ -1,1058 +1,1804 @@
-#!/usr/bin/env bash
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
-# For more details on how to define your own commands
-# look online at https://github.com/escapace/manage
-#
-# shellcheck disable=SC1090,SC2016,SC2034,SC1117,SC2206
-# @dependency bc
-# @dependency cut
-# @dependency find
-# @dependency fold
-# @dependency grep
-# @dependency head
-# @dependency printf
-# @dependency rev
-# @dependency sed
-# @dependency seq
-# @dependency sort
-# @dependency tr
+#!/usr/bin/env python3
+"""Manage this dotfiles repository."""
 
-if ((BASH_VERSINFO[0] == 4)) &&
-   ((BASH_VERSINFO[1] >= 2))
-then
-    true
-elif ((BASH_VERSINFO[0] >= 5))
-then
-    true
-else
-    echo "You need at least GNU bash, version 4.2" >&2
-    exit 1
-fi
-
-MANAGE_VERSION="v3.9.2"
-
-MANAGE_IS_CI () {
-    # Returns 0 if the current environment
-    # is a Continuous Integration server.
-
-    local ci=(
-        "${CI}"                     # Travis CI, CircleCI, Gitlab CI, Appveyor, CodeShip
-        "${CONTINUOUS_INTEGRATION}" # Travis CI
-        "${BUILD_NUMBER}"           # Jenkins, TeamCity
-    )
-
-    local code=0
-    local variable
-
-    for variable in "${ci[@]}"
-    do
-        [ -n "${variable// }" ] || code=$((code+1))
-    done
-
-    [[ ! "${#ci[@]}" == "${code}" ]]
-}
-
-MANAGE_IS_LOCAL () {
-    # shellcheck disable=1001
-    [[ "${1}" =~ ^[-_a-zA-Z0-9]+\/[-_a-zA-Z0-9]+$ ]] || return 1
-}
-
-if [ -z "${MANAGE_INTERACTIVE}" ] &&
-   [ -t 0 ] &&
-   [ -t 1 ] &&
-   ! MANAGE_IS_CI
-then
-    MANAGE_INTERACTIVE=true
-else
-    MANAGE_INTERACTIVE=false
-fi
-
-MANAGE_DELIMITER=$'[]'
-
-MANAGE_COREUTILS=(sed sort)
-
-for executable in "${MANAGE_COREUTILS[@]}"
-do
-    eval "
-        ${executable} ()
-        {
-            if command -v \"g${executable}\" > /dev/null 2>&1
-            then
-                command \"g${executable}\" \"\$@\"
-            else
-                command \"${executable}\" \"\$@\"
-            fi
-        }
-    "
-done
-
-unset executable
-
-strict()
-{
-    # set/unset strict mode
-    #
-    # Usage: strict true/false
-    #
-
-    local value
-    value="$(tr '[:upper:]' '[:lower:]' <<< "$1")"
-    case "${value}" in
-        no|n|false|f|off|0)
-            set   +o errexit
-            set   +o errtrace
-            set   +o pipefail
-            shopt -u nullglob
-            IFS=$' \n\t'
-            ;;
-        *)
-            set   -o errexit
-            set   -o errtrace
-            set   -o pipefail
-            shopt -s nullglob
-            IFS=$'\n\t'
-    esac
-}
-
-verbose ()
-{
-    #
-    # With no arguments, test if verbose mode is enabled.
-    # With one argument, set/unset verbose mode.
-    #
-
-    if (( $# == 0 )); then
-        [ -n "${MANAGE_VERBOSE}" ] && return "${MANAGE_VERBOSE}"
-        return 1
-    else
-        local value
-        value="$(tr '[:upper:]' '[:lower:]' <<< "$1")"
-        case "${value}" in
-            no|n|false|f|off|0)
-                MANAGE_VERBOSE=1
-                ;;
-            *)
-                MANAGE_VERBOSE=0
-        esac
-    fi
-}
-
-declare -A MANAGE_MODULE_NAMES
-declare -A MANAGE_MODULES
-declare -A MANAGE_REMOTES
-declare -A MANAGE_REMOTE_PATHS
-
-MANAGE_ERROR () {
-    local type="$1"; shift
-    local prefix=$'\033[1m\033[31mERROR\033[39m\033[0m'
-
-    MANAGE_SPINNER disable
-
-    case "${type}" in
-        shasum)
-            printf "%s No sha256sum, shasum or openssl in path\n" "${prefix}" "$@" >&2
-        ;;
-        notDefined)
-            printf "%s '%s' is not defined\n" "${prefix}" "$@" >&2
-        ;;
-        notRepository)
-            printf "%s '%s' is not a valid manage repository\n" "${prefix}" "$@" >&2
-        ;;
-        diffVersion)
-            printf "%s at least two different versions requested for the '%s' repository\n" "${prefix}" "$@" >&2
-        ;;
-        failDownload)
-            printf "%s failed to download repository '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        invalidQuery)
-            printf "%s invalid option '%s' in query '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        invalidVersion)
-            printf "%s version option in query '%s'\nmust match the pattern '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        failImport)
-            printf "%s failed to import '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        failVerify)
-            printf "%s failed to verify repository '%s' with tag '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        collision)
-            printf "%s the same name is used by two different functions\n '%s' and '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        arch)
-            printf "%s Unsupported architecture '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        os)
-            printf "%s Unsupported os type '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        yq)
-            printf "%s failed to download yq from '%s'\n" "${prefix}" "$@" >&2
-        ;;
-        *)
-            printf "%s uncaught exception\n" "${prefix}" >&2
-    esac
-
-    exit 1
-}
-
-MANAGE_BOOTSTRAP () {
-    local namespace
-
-    eval "$(
-        echo 'MANAGE_RUNTIME () (
-        strict true
-        '
-
-        echo "${MANAGE_NAMESPACE}"
-
-        echo '
-            local ___func="$1"
-            shift
-
-            if [[ "$(type -t "${___func}")" = "function" ]]
-            then
-                "${___func}" "$@"
-            else
-                return 1
-            fi
-        )
-        '
-    )"
-}
-
-_ () {
-    if [[ -n "${1}" ]] &&
-       [[ -n "${MANAGE_MODULE_NAMES["${1}"]}" ]]
-    then
-        MANAGE_RUNTIME "$@"
-    else
-        MANAGE_ERROR notDefined "$1"
-    fi
-}
-
-MANAGE_GET_FUNCTION () (
-    cd "$(dirname "${1}")" || return 1
-
-    source "${1}"
-    declare -f "${2}"
+import argparse
+import configparser
+import contextlib
+import dataclasses
+import hashlib
+import json
+import os
+import platform as platform_module
+import re
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
 )
 
-MANAGE_SPINNER_ENABLED=false
-MANAGE_SPINNER_STATE=0
-MANAGE_SPINNER_SYMBOLS=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+GITHUB_API = "https://api.github.com"
+GITHUB_USER_AGENT = "yyxi-dotfiles"
+CANONICAL_REPOSITORY = ".dotfiles"
+CONTEXT_ENGINEERING_REPOSITORY = "git@github.com:yyxi/context-engineering.git"
+MAX_AUTOMATIC_RATE_LIMIT_SLEEP_SECONDS = 300
+RATE_LIMIT_LOW_WARNED = False
 
-MANAGE_SHASUM () {
-    local string="$1"
-    local product
-
-    if command -v "sha256sum" > /dev/null 2>&1
-    then
-        product="$(echo -n "${string}" | sha256sum | awk '{print toupper($1)}')"
-    elif command -v "shasum" > /dev/null 2>&1
-    then
-        product="$(echo -n "${string}" | shasum -a 256 | awk '{print toupper($1)}')"
-    elif command -v "openssl" > /dev/null 2>&1
-    then
-        product="$(echo -n "${string}" | openssl dgst -sha256 | awk '{print toupper($2)}')"
-    else
-        MANAGE_ERROR shasum
-    fi
-
-    echo "${product:0:32}"
+# Tool asset names are explicit for the only supported platforms:
+# linux_amd64, linux_arm64, darwin_amd64, and darwin_arm64.
+#
+# Add a tool by copying the release asset names from GitHub into the assets
+# mapping. The only template variables available inside asset names are:
+#   {version}: the tag without a leading "v" for SemVer-style tags
+#   {tag}: the configured GitHub tag exactly as written below
+# Missing platform assets are allowed in config, but installing that tool on the
+# missing platform fails because the requested final state cannot be reached.
+#
+# The default install layout extracts/copies only configured binaries into
+# vendor/<tool>. Use install_layout="archive" when a tool needs files beside the
+# binary. Both layouts support strip_components=N, equivalent to tar's
+# --strip-components option, before locating binaries or preserving trees. Binary
+# source paths are written relative to the post-strip tree.
+TOOL_CONFIGS = {
+    "fetch": {
+        "default": True,
+        "tag": "v0.4.8",
+        "commit": "7aa2f2672619523a8a3d714e63b0c8f48177f62f",
+        "repository": "gruntwork-io/fetch",
+        "assets": {
+            "linux_amd64": "fetch_linux_amd64",
+            "linux_arm64": "fetch_linux_arm64",
+            "darwin_amd64": "fetch_darwin_amd64",
+            "darwin_arm64": "fetch_darwin_arm64",
+        },
+        "binaries": ("fetch",),
+        "checksum": {"asset_name": "SHA256SUMS"},
+    },
+    "gh": {
+        "default": True,
+        "tag": "v2.92.0",
+        "commit": "6c470f60803784e1558b626022677c53dccb6016",
+        "repository": "cli/cli",
+        "assets": {
+            "linux_amd64": "gh_{version}_linux_amd64.tar.gz",
+            "linux_arm64": "gh_{version}_linux_arm64.tar.gz",
+            "darwin_amd64": "gh_{version}_macOS_amd64.zip",
+            "darwin_arm64": "gh_{version}_macOS_arm64.zip",
+        },
+        "binaries": ("gh",),
+        "checksum": {"asset_name": "gh_{version}_checksums.txt"},
+        "dependencies": ("fetch",),
+        "aliases": ("github-cli",),
+    },
+    "nvim": {
+        "tag": "v0.12.2",
+        "commit": "4b35336f6f850ce68a230716401cdaa21bdb6a25",
+        "repository": "neovim/neovim",
+        "assets": {
+            "linux_amd64": "nvim-linux-x86_64.tar.gz",
+            "linux_arm64": "nvim-linux-arm64.tar.gz",
+            "darwin_amd64": "nvim-macos-x86_64.tar.gz",
+            "darwin_arm64": "nvim-macos-arm64.tar.gz",
+        },
+        "install_layout": "archive",
+        "strip_components": 1,
+        "binaries": ({"name": "nvim", "source": "bin/nvim"},),
+        "dependencies": ("fetch",),
+        "tag_object": "2b6d81f1aef77614f49c206de5ec790ae50addfc",
+        "signature": {
+            "tag": "required",
+            "commit": {
+                "allow_unsigned": "release is signed by the annotated tag; commit itself is unsigned",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "restic": {
+        "default": True,
+        "tag": "v0.18.1",
+        "commit": "7d0aa7f2e30546fba7c8f1c0bae4d6704e3d8423",
+        "repository": "restic/restic",
+        "assets": {
+            "linux_amd64": "restic_{version}_linux_amd64.bz2",
+            "linux_arm64": "restic_{version}_linux_arm64.bz2",
+            "darwin_amd64": "restic_{version}_darwin_amd64.bz2",
+            "darwin_arm64": "restic_{version}_darwin_arm64.bz2",
+        },
+        "binaries": ("restic",),
+        "checksum": {"asset_name": "SHA256SUMS"},
+        "dependencies": ("fetch",),
+        "tag_object": "29446b0fd853b7765f652584ff90e817890ee389",
+        "signature": {
+            "tag": "required",
+            "commit": {
+                "allow_unsigned": "release is signed by the annotated tag; commit itself is unsigned",
+            },
+        },
+    },
+    "fzf": {
+        "default": True,
+        "tag": "v0.72.0",
+        "commit": "6fefe025461b168eac2546ccba3403b70eb5da16",
+        "repository": "junegunn/fzf",
+        "assets": {
+            "linux_amd64": "fzf-{version}-linux_amd64.tar.gz",
+            "linux_arm64": "fzf-{version}-linux_arm64.tar.gz",
+            "darwin_amd64": "fzf-{version}-darwin_amd64.tar.gz",
+            "darwin_arm64": "fzf-{version}-darwin_arm64.tar.gz",
+        },
+        "binaries": ("fzf",),
+        "checksum": {"asset_name": "fzf_{version}_checksums.txt"},
+        "dependencies": ("fetch",),
+    },
+    "svu": {
+        "default": True,
+        "tag": "v3.4.1",
+        "commit": "359485eb5234718c3258717e2a2781f8d241489d",
+        "repository": "caarlos0/svu",
+        "assets": {
+            "linux_amd64": "svu_{version}_linux_amd64.tar.gz",
+            "linux_arm64": "svu_{version}_linux_arm64.tar.gz",
+            "darwin_amd64": "svu_{version}_darwin_all.tar.gz",
+            "darwin_arm64": "svu_{version}_darwin_all.tar.gz",
+        },
+        "binaries": ("svu",),
+        "checksum": {
+            "asset_name": "checksums.txt",
+            "sigstore_bundle_name": "checksums.txt.sigstore.json",
+            "bundle_identity": "https://github.com/caarlos0/svu/.github/workflows/release.yml@refs/tags/v3.4.1",
+            "bundle_issuer": "https://token.actions.githubusercontent.com",
+            "verify_sigstore": True,
+        },
+        "dependencies": ("fetch", "cosign"),
+    },
+    "fd": {
+        "default": True,
+        "tag": "v10.4.2",
+        "commit": "7027d45303b412be6fa9c09d689cc6276748fb38",
+        "repository": "sharkdp/fd",
+        "assets": {
+            "linux_amd64": "fd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "fd-v{version}-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "fd-v{version}-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "fd-v{version}-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("fd",),
+        "dependencies": ("fetch",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "delta": {
+        "default": True,
+        "tag": "0.19.2",
+        "commit": "1502986e81c8e3fa27bfb5b84bac6b281a6b1edd",
+        "repository": "dandavison/delta",
+        "assets": {
+            "linux_amd64": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "delta-{version}-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "delta-{version}-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "delta-{version}-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("delta",),
+        "dependencies": ("fetch",),
+        "aliases": ("git-delta",),
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "difft": {
+        "default": True,
+        "tag": "0.69.0",
+        "commit": "90a0f1b6aa88401170405a87be139cbabe00b12a",
+        "repository": "Wilfred/difftastic",
+        "assets": {
+            "linux_amd64": "difft-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "difft-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "difft-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "difft-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("difft",),
+        "dependencies": ("fetch",),
+        "aliases": ("difftastic",),
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "zoxide": {
+        "default": True,
+        "tag": "v0.9.9",
+        "commit": "9cdc6aa3740b4d8a9d62406c99e84c5de49645e9",
+        "repository": "ajeetdsouza/zoxide",
+        "assets": {
+            "linux_amd64": "zoxide-{version}-x86_64-unknown-linux-musl.tar.gz",
+            "linux_arm64": "zoxide-{version}-aarch64-unknown-linux-musl.tar.gz",
+            "darwin_amd64": "zoxide-{version}-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "zoxide-{version}-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("zoxide",),
+        "dependencies": ("fetch",),
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "walk": {
+        "default": True,
+        "tag": "v1.13.0",
+        "commit": "0c1a9c0dce2f1300b7848fa6e8cfd635377289b8",
+        "repository": "antonmedv/walk",
+        "assets": {
+            "linux_amd64": "walk_linux_amd64",
+            "linux_arm64": "walk_linux_arm64",
+            "darwin_amd64": "walk_darwin_amd64",
+            "darwin_arm64": "walk_darwin_arm64",
+        },
+        "binaries": ("walk",),
+        "dependencies": ("fetch",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "fx": {
+        "default": True,
+        "tag": "39.2.0",
+        "commit": "c8fd8cf394083141ab912f604d332e1cfde830cb",
+        "repository": "antonmedv/fx",
+        "assets": {
+            "linux_amd64": "fx_linux_amd64",
+            "linux_arm64": "fx_linux_arm64",
+            "darwin_amd64": "fx_darwin_amd64",
+            "darwin_arm64": "fx_darwin_arm64",
+        },
+        "binaries": ("fx",),
+        "dependencies": ("fetch",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "age": {
+        "tag": "v1.3.1",
+        "commit": "b8564adb6d58329b8a3e267360ca2b0abc4efe1d",
+        "repository": "FiloSottile/age",
+        "assets": {
+            "linux_amd64": "age-v{version}-linux-amd64.tar.gz",
+            "linux_arm64": "age-v{version}-linux-arm64.tar.gz",
+            "darwin_amd64": "age-v{version}-darwin-amd64.tar.gz",
+            "darwin_arm64": "age-v{version}-darwin-arm64.tar.gz",
+        },
+        "binaries": ("age", "age-keygen"),
+        "dependencies": ("fetch",),
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
+    "cosign": {
+        "tag": "v3.0.6",
+        "commit": "f1ad3ee952313be5d74a49d67ba0aa8d0d5e351f",
+        "repository": "sigstore/cosign",
+        "assets": {
+            "linux_amd64": "cosign-linux-amd64",
+            "linux_arm64": "cosign-linux-arm64",
+            "darwin_amd64": "cosign-darwin-amd64",
+            "darwin_arm64": "cosign-darwin-arm64",
+        },
+        "binaries": ("cosign",),
+        "checksum": {"asset_name": "cosign_checksums.txt"},
+        "dependencies": ("fetch",),
+    },
+    "sops": {
+        "tag": "v3.13.1",
+        "commit": "72e337c45c195e02394ee865f9ec2b794b6b74b4",
+        "repository": "getsops/sops",
+        "assets": {
+            "linux_amd64": "sops-v{version}.linux.amd64",
+            "linux_arm64": "sops-v{version}.linux.arm64",
+            "darwin_amd64": "sops-v{version}.darwin.amd64",
+            "darwin_arm64": "sops-v{version}.darwin.arm64",
+        },
+        "binaries": ("sops",),
+        "checksum": {
+            "asset_name": "sops-v{version}.checksums.txt",
+            "certificate_name": "sops-v{version}.checksums.pem",
+            "signature_name": "sops-v{version}.checksums.sig",
+            "certificate_identity_regexp": "https://github.com/getsops",
+            "certificate_issuer": "https://token.actions.githubusercontent.com",
+            "verify_sigstore": True,
+        },
+        "dependencies": ("fetch", "cosign"),
+    },
+    "k6": {
+        "tag": "v2.0.0",
+        "commit": "8c3be52cc17dee055c9e8757a66fb97d946dd248",
+        "repository": "grafana/k6",
+        "assets": {
+            "linux_amd64": "k6-v{version}-linux-amd64.tar.gz",
+            "linux_arm64": "k6-v{version}-linux-arm64.tar.gz",
+            "darwin_amd64": "k6-v{version}-macos-amd64.zip",
+            "darwin_arm64": "k6-v{version}-macos-arm64.zip",
+        },
+        "binaries": ("k6",),
+        "checksum": {"asset_name": "k6-v{version}-checksums.txt"},
+        "dependencies": ("fetch",),
+    },
 }
 
-MANAGE_SPINNER () {
-    local mode="$1"
-    local line
-    local symbol
 
-    case "${mode}" in
-        enable)
-            if [[ "${MANAGE_INTERACTIVE}" = "true" ]] &&
-               [[ "${MANAGE_SPINNER_ENABLED}" = "false" ]]
-            then
-                if command -v "tput" > /dev/null 2>&1
-                then
-                    tput civis
-                    trap 'tput cnorm' INT HUP TERM QUIT EXIT
-                fi
+class ManageError(Exception):
+    """Raised when the requested final state cannot be reached."""
 
-                MANAGE_SPINNER_ENABLED=true
-            fi
-        ;;
-        disable)
-            if [[ "${MANAGE_SPINNER_ENABLED}" = "true" ]]
-            then
-                printf "\e[K\r"
-                command -v "tput" > /dev/null 2>&1 && tput cnorm
 
-                MANAGE_SPINNER_ENABLED=false
-            fi
-        ;;
-        *)
-            if [[ "${MANAGE_SPINNER_ENABLED}" = "true" ]]
-            then
-                if [[ "${#MANAGE_SPINNER_SYMBOLS[@]}" = "${MANAGE_SPINNER_STATE}" ]]
-                then
-                    MANAGE_SPINNER_STATE=0
-                else
-                    symbol="${MANAGE_SPINNER_SYMBOLS[${MANAGE_SPINNER_STATE}]}"
-                    MANAGE_SPINNER_STATE=$((MANAGE_SPINNER_STATE + 1))
+@dataclasses.dataclass(frozen=True)
+class Platform:
+    os_name: str
+    arch: str
 
-                    printf "%s \e[K%s\r" "${symbol}" "${mode}"
-                fi
-            fi
-    esac
-}
+    @property
+    def key(self) -> str:
+        return "{0}_{1}".format(self.os_name, self.arch)
 
-MANAGE_SOURCE () {
-    local mode="$1"
-    local file="$2"
-    local script="$3"
-    local longName="${4:-${script}}"
-    local name
-    local cwd
 
-    name="$(basename "${script}")"
+@dataclasses.dataclass(frozen=True)
+class BinarySpec:
+    output_name: str
+    source_name: Optional[str] = None
+    sources: Mapping[str, str] = dataclasses.field(default_factory=dict)
 
-    if [[ -z "${MANAGE_MODULE_NAMES["${name}"]}" ]]
-    then
-        MANAGE_MODULE_NAMES["${name}"]="${longName}"
-    # else
-    #     MANAGE_ERROR collision "${longName}" "${MANAGE_MODULE_NAMES["${name}"]}"
-    # fi
+    def source_path(self, platform: Platform) -> str:
+        return self.sources.get(platform.key) or self.source_name or self.output_name
 
-    elif [[ "${MANAGE_MODULE_NAMES["${name}"]}" != "${longName}" ]]
-    then
-        MANAGE_ERROR collision "${longName}" "${MANAGE_MODULE_NAMES["${name}"]}"
-    fi
+    def source_basename(self, platform: Platform) -> str:
+        return Path(self.source_path(platform)).name
 
-    if [[ "${mode}" = "underscore" ]]
-    then
-        MANAGE_NAMESPACE+="$(MANAGE_GET_FUNCTION "${file}" "${name}")"$'\n' ||
-            MANAGE_ERROR failImport "${longName}"
-    elif [[ "${mode}" = "local" ]]
-    then
-        {
-            cwd="$(pwd)"
-            cd "$(dirname "${file}")"
-            source "${file}"
-            cd "${cwd}"
-        } || MANAGE_ERROR failImport "${longName}"
-    fi
-}
 
-MANAGE_GET () {
-    local repository="$1"
-    local version="$2"
-    local directory="$3"
-    local verify="${4:-true}"
+@dataclasses.dataclass(frozen=True)
+class ChecksumSpec:
+    asset_name: str
+    sigstore_bundle_name: Optional[str] = None
+    bundle_identity: Optional[str] = None
+    bundle_identity_regexp: Optional[str] = None
+    bundle_issuer: Optional[str] = None
+    certificate_name: Optional[str] = None
+    signature_name: Optional[str] = None
+    certificate_identity_regexp: Optional[str] = None
+    certificate_issuer: Optional[str] = None
+    verify_sigstore: bool = False
 
-    local localVersion
 
-    local lsRemoteRegex="^[a-z0-9]{40}[\t ]+refs\/tags\/v([0-9]+)\.([0-9]+)\.([0-9]+)([0-9A-Za-z-])?"
-    local state=1
+@dataclasses.dataclass(frozen=True)
+class Tool:
+    name: str
+    version: str
+    tag: str
+    commit: str
+    repository: str
+    assets: Mapping[str, str]
+    binaries: Tuple[BinarySpec, ...]
+    install_layout: str = "binaries"
+    strip_components: int = 0
+    checksum: Optional[ChecksumSpec] = None
+    dependencies: Tuple[str, ...] = ()
+    aliases: Tuple[str, ...] = ()
+    executable_tools: Tuple[str, ...] = ()
+    tag_object: Optional[str] = None
+    tag_signature: str = "not_applicable"
+    tag_signature_exception: Optional[str] = None
+    commit_signature: str = "required"
+    commit_signature_exception: Optional[str] = None
+    missing_checksum_exception: Optional[str] = None
+    default: bool = False
 
-    if [[ -n "${MANAGE_REMOTES["${repository}"]}" ]]
-    then
-        [[ "${MANAGE_REMOTES["${repository}"]}" != "${version}" ]] && {
-            MANAGE_ERROR diffVersion "${repository}"
-        }
+    def asset_name(self, platform: Platform) -> str:
+        template = self.assets.get(platform.key)
+        if template is None:
+            raise fatal(
+                "{0} does not support platform {1}".format(self.name, platform.key)
+            )
+        return format_template(template, self)
 
-        state=0
-    else
-        if [ -d "${directory}" ] &&
-           [ -f "${directory}/.manage.yml" ] &&
-           cd "${directory}" &&
-           [[ "$(git config remote.origin.url)" = "${repository}" ]] &&
-           localVersion="$(git describe --exact-match HEAD | head -n 1)"
-        then
-            if [[ "${verify}" = "false" ]]
-            then
-                state=0
-                MANAGE_REMOTES["${repository}"]="${version}"
-            else
-                cd "${directory}" &&
-                git tag -v "${localVersion}" &> /dev/null &&
-                state=0 &&
-                MANAGE_REMOTES["${repository}"]="${version}"
-            fi
+    def required_external_tools(self, platform: Platform) -> Tuple[str, ...]:
+        tools = list(self.executable_tools)
+        kind = install_kind_for_asset(self.asset_name(platform))
+        if kind == "tar.gz":
+            tools.append("tar")
+        elif kind == "zip":
+            tools.append("unzip")
+        elif kind == "bz2":
+            tools.append("bunzip2")
+        return tuple(sorted(set(tools)))
 
-            if [[ "${version}" == "latest" ]] ||
-               [[ "${version}" == "${localVersion}" ]]
-            then
-                true
-            else
-                state=1
-            fi
-        fi
-    fi
 
-    if [[ "${state}" = 1 ]]
-    then
-        (
-            rm -rf "${directory}"
-            mkdir -p "${directory}"
-            cd "${directory}"
+@dataclasses.dataclass(frozen=True)
+class InstallPaths:
+    repository: Path
+    home: Path
 
-            git init -q "${directory}"
-            GIT_TERMINAL_PROMPT=0 git remote add origin "${repository}"
+    @property
+    def vendor(self) -> Path:
+        return self.repository / "vendor"
 
-            if [[ "${version}" = "latest" ]]
-            then
-                version="$(
-                    git ls-remote --refs -t -h -q |
-                    sed -r -n "/${lsRemoteRegex}/p" |
-                    LC_ALL=C sort -r -t '/' -k 3 -V |
-                    head -n 1 |
-                    cut -d '/' -f 3
-                )"
-            fi
+    @property
+    def bin(self) -> Path:
+        return self.repository / "bin"
 
-            {
-                GIT_TERMINAL_PROMPT=0 git fetch -q --depth=1 --recurse-submodules=yes origin tag "${version}"
-                GIT_TERMINAL_PROMPT=0 git checkout -q "${version}"
-                GIT_TERMINAL_PROMPT=0 git submodule --quiet update --depth 1 --init --recursive
-            } &> /dev/null
+    @property
+    def canonical_repository(self) -> Path:
+        return self.home / CANONICAL_REPOSITORY
 
-            if [[ "${verify}" = "true" ]]
-            then
-                git tag -v "${version}" &> /dev/null || {
-                    rm -rf "${directory}"
-                    MANAGE_ERROR failVerify "${repository}" "${version}"
-                }
-            fi
-        ) || return 1
+    def is_canonical(self) -> bool:
+        return same_path(self.repository, self.canonical_repository)
 
-        MANAGE_REMOTES["${repository}"]="${2}"
-    fi
-}
 
-MANAGE_GET_OR_DELETE () {
-    local repository="$1"
-    local version="$2"
-    local directory="$3"
-    local verify="${4:-true}"
+@dataclasses.dataclass(frozen=True)
+class SignatureStatus:
+    verified: bool
+    reason: str
 
-    local OPWD
 
-    OPWD="$(pwd)"
+@dataclasses.dataclass(frozen=True)
+class GitResolution:
+    commit: str
+    tag_object: Optional[str]
+    tag_signature: Optional[SignatureStatus]
+    commit_signature: Optional[SignatureStatus]
 
-    MANAGE_GET "${repository}" "${version}" "${directory}" "${verify}" || {
-        rm -rf "${directory}" || true
-        MANAGE_ERROR failDownload "${repository}"
+
+def info(message: str) -> None:
+    print(message, flush=True)
+
+
+def warn(message: str) -> None:
+    print("warning: {0}".format(message), file=sys.stderr, flush=True)
+
+
+def fatal(message: str) -> ManageError:
+    return ManageError(message)
+
+
+def same_path(left: Path, right: Path) -> bool:
+    try:
+        return left.resolve() == right.resolve()
+    except OSError:
+        return left.absolute() == right.absolute()
+
+
+def repository_dir() -> Path:
+    return Path(__file__).resolve().parent
+
+
+def home_dir() -> Path:
+    home = os.environ.get("HOME") or os.path.expanduser("~")
+    if not home or home == "~":
+        raise fatal("unable to determine HOME")
+    return Path(home).resolve()
+
+
+def current_platform() -> Platform:
+    system = platform_module.system()
+    machine = platform_module.machine()
+    if system == "Linux":
+        os_name = "linux"
+    elif system == "Darwin":
+        os_name = "darwin"
+    else:
+        raise fatal("unsupported operating system: {0}".format(system))
+
+    if machine in ("x86_64", "AMD64"):
+        arch = "amd64"
+    elif machine in ("aarch64", "arm64"):
+        arch = "arm64"
+    else:
+        raise fatal("unsupported architecture: {0}".format(machine))
+
+    return Platform(os_name=os_name, arch=arch)
+
+
+def version_from_tag(tag: str) -> str:
+    if re.fullmatch(r"v\d+(?:\.\d+)+(?:[-+].*)?", tag):
+        return tag[1:]
+    return tag
+
+
+def binary_specs(values: Sequence[Any]) -> Tuple[BinarySpec, ...]:
+    specs = []
+    for value in values:
+        if isinstance(value, str):
+            specs.append(BinarySpec(value))
+        elif isinstance(value, tuple) and len(value) == 2:
+            specs.append(BinarySpec(str(value[0]), str(value[1])))
+        elif isinstance(value, dict):
+            name = value.get("name")
+            if not name:
+                raise fatal("binary mapping is missing a name: {0!r}".format(value))
+            specs.append(
+                BinarySpec(
+                    output_name=str(name),
+                    source_name=optional_string(value.get("source")),
+                    sources=string_mapping(value.get("sources")),
+                )
+            )
+        else:
+            raise fatal("invalid binary specification: {0!r}".format(value))
+    return tuple(specs)
+
+
+def checksum_spec(value: Optional[Mapping[str, Any]]) -> Optional[ChecksumSpec]:
+    if value is None:
+        return None
+    return ChecksumSpec(
+        asset_name=str(value["asset_name"]),
+        sigstore_bundle_name=optional_string(value.get("sigstore_bundle_name")),
+        bundle_identity=optional_string(value.get("bundle_identity")),
+        bundle_identity_regexp=optional_string(value.get("bundle_identity_regexp")),
+        bundle_issuer=optional_string(value.get("bundle_issuer")),
+        certificate_name=optional_string(value.get("certificate_name")),
+        signature_name=optional_string(value.get("signature_name")),
+        certificate_identity_regexp=optional_string(
+            value.get("certificate_identity_regexp")
+        ),
+        certificate_issuer=optional_string(value.get("certificate_issuer")),
+        verify_sigstore=bool(value.get("verify_sigstore", False)),
+    )
+
+
+def optional_string(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    return str(value)
+
+
+def string_tuple(value: Any) -> Tuple[str, ...]:
+    if value is None:
+        return ()
+    return tuple(str(item) for item in value)
+
+
+def string_mapping(value: Any) -> Mapping[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise fatal("asset mapping must be a dictionary")
+    return {str(key): str(item) for key, item in value.items()}
+
+
+def signature_requirement(signature: Any, name: str) -> str:
+    if not isinstance(signature, dict):
+        return "not_applicable" if name == "tag" else "required"
+    value = signature.get(name)
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        if "allow_unsigned" in value:
+            return "allow_unsigned"
+        if "allow_unverified" in value:
+            return "allow_unverified"
+    return "not_applicable" if name == "tag" else "required"
+
+
+def signature_exception(signature: Any, name: str) -> Optional[str]:
+    if not isinstance(signature, dict):
+        return None
+    value = signature.get(name)
+    if isinstance(value, dict):
+        if "allow_unsigned" in value:
+            return str(value["allow_unsigned"])
+        if "allow_unverified" in value:
+            return str(value["allow_unverified"])
+    return None
+
+
+def tool_from_config(name: str, config: Mapping[str, Any]) -> Tool:
+    tag = str(config["tag"])
+    return Tool(
+        name=name,
+        version=str(config.get("version") or version_from_tag(tag)),
+        tag=tag,
+        commit=str(config["commit"]),
+        repository=str(config["repository"]),
+        assets=string_mapping(config.get("assets")),
+        binaries=binary_specs(config.get("binaries", ())),
+        install_layout=str(config.get("install_layout", "binaries")),
+        strip_components=int(config.get("strip_components", 0)),
+        checksum=checksum_spec(config.get("checksum")),
+        dependencies=string_tuple(config.get("dependencies")),
+        aliases=string_tuple(config.get("aliases")),
+        executable_tools=string_tuple(config.get("executable_tools")),
+        tag_object=optional_string(config.get("tag_object")),
+        tag_signature=signature_requirement(config.get("signature"), "tag"),
+        tag_signature_exception=signature_exception(config.get("signature"), "tag"),
+        commit_signature=signature_requirement(config.get("signature"), "commit"),
+        commit_signature_exception=signature_exception(
+            config.get("signature"), "commit"
+        )
+        or optional_string(config.get("unsigned_commit_exception")),
+        missing_checksum_exception=optional_string(
+            config.get("missing_checksum_exception")
+        ),
+        default=bool(config.get("default", False)),
+    )
+
+
+TOOLS = {name: tool_from_config(name, config) for name, config in TOOL_CONFIGS.items()}
+DEFAULT_INSTALL = tuple(name for name, tool in TOOLS.items() if tool.default)
+ALIASES = {alias: tool.name for tool in TOOLS.values() for alias in tool.aliases}
+
+
+def asset_name(tool: Tool, platform: Platform) -> str:
+    return tool.asset_name(platform)
+
+
+def format_template(template: str, tool: Tool) -> str:
+    return template.format(version=tool.version, tag=tool.tag)
+
+
+def request_headers() -> Dict[str, str]:
+    return {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": GITHUB_USER_AGENT,
+        "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    [[ "$(pwd)" = "${OPWD}" ]] || cd "${OPWD}"
-}
-
-MANAGE_REPOSITORY_PATH () {
-    local repository="$1"
-    local directory="$2"
-    local modulePath
-
-    if [[ -z "${MANAGE_REMOTE_PATHS["${repository}"]}" ]]
-    then
-        [ ! -f "${directory}/.manage.yml" ] && {
-            rm -rf "${directory}" || true
-            MANAGE_ERROR notRepository "${repository}"
-        }
-
-        modulePath="$(yq '.directories.module // "scripts/modules"' "${directory}/.manage.yml")"
-        modulePath="${directory}/${modulePath}"
-
-        [ ! -d "${modulePath}" ] && {
-            rm -rf "${directory}" || true
-            MANAGE_ERROR notRepository "${repository}"
-        }
-
-        MANAGE_REMOTE_PATHS["${repository}"]="${modulePath}"
-    fi
-}
-
-MANAGE_TAG ()
-{
-    local tag=${1}; shift
-    local trim='s/^[ \t]*//;s/[ \t]*$//'
-    local comment='^[ \t]*[#]+[ \t]*'
-    local import='[-_a-zA-Z0-9]+\/[-_a-zA-Z0-9]+|.*'
-    local dependency='[-_a-zA-Z0-9]+'
-
-    case "$tag" in
-        import)
-            text="$(sed -nr "s/${comment}@${tag} (${import})$/\1/p;${trim}" "$@")"
-
-            if [[ -n "${text}" ]]
-            then
-                declare -a lines
-                declare -a fragments
-                declare -A product
-                local fragment
-                local line
-
-                IFS=$'\n' read -rd '' -a lines <<< "${text}"
-
-                for line in "${lines[@]}"
-                do
-                    IFS=$' ' read -r -a fragments <<< "${line}"
-
-                    if MANAGE_IS_LOCAL "${fragments[0]}"
-                    then
-                        product["${line}"]=1
-                    else
-                        local repo="${fragments[0]}"
-                        local fragments=("${fragments[@]:1}")
-
-                        for fragment in "${fragments[@]}"
-                        do
-                            product["${repo}${MANAGE_DELIMITER}${fragment}"]=1
-                        done
-                    fi
-                done
-
-                if  [[ -n "${!product[*]}" ]]
-                then
-                    echo "${!product[*]}"
-                fi
-            fi
-        ;;
-        dependency)
-            sed -nr "s/${comment}@${tag} (${dependency})$/\1/p;${trim}" "$@"
-        ;;
-        *)
-            sed -nr "s/${comment}@${tag} (.+)$/\1/p;${trim}" "$@"
-    esac
-}
-
-MANAGE_QUERY () {
-    local mode="$1"; shift 1
-    local file
-    local list=()
-    local text
-
-    for file in "$@"
-    do
-        text="$(MANAGE_TAG import "${file}" | tr '\n' ' ' || true)"
-        IFS=$' ' read -ra list <<< "${text}"
-
-        if [[ "${file}" == "${MANAGE_DOWNLOAD_DIRECTORY}"/* ]]
-        then
-            MANAGE_RESOLVE_REMOTE "${mode}" "${list[@]}"
-        else
-            MANAGE_RESOLVE_LOCAL "${mode}" "${list[@]}"
-        fi
-    done
-}
-
-MANAGE_RESOLVE_REMOTE () {
-    local mode="$1"; shift 1
-    local arguments
-    local script
-    local file
-    local versionRegex='v([0-9]+)\.([0-9]+)\.([0-9]+)([\.0-9A-Za-z-]*)?'
-    local OPWD
-
-    OPWD="$(pwd)"
-
-    IFS=$'\n ' read -r -a arguments <<< "${@}"
-
-    declare -A managePaths
-    declare -A imports
-    declare -A scripts
-    declare -A remoteModules
-    declare -A manageModules
-
-    managePaths["${MANAGE_DIRECTORY}/modules"]="1"
-
-    for script in "${arguments[@]}"
-    do
-        if [[ -n "${script}" ]] &&
-           [[ -z "${scripts["${script}"]}" ]]
-        then
-            if MANAGE_IS_LOCAL "${script}"
-            then
-                [[ -z "${MANAGE_MODULES["${script}"]}" ]] && {
-                    scripts["${script}"]="${script}"
-                    MANAGE_SPINNER "${script}"
-                }
-            else
-                local prefix
-                local url
-                local left="${script%%${MANAGE_DELIMITER}*}"
-                local right="${script#*${MANAGE_DELIMITER}}"
-
-                if [[ $left = "https://"* ]]
-                then
-                    prefix="https://"
-                    url="${left#https:\/\/}"
-                elif [[ $left = "git://"* ]]
-                then
-                    prefix="git://"
-                    url="${left#git:\/\/}"
-                elif [[ $left = "ssh://"* ]]
-                then
-                    prefix="ssh://"
-                    url="${left#ssh:\/\/}"
-                else
-                    url="${left}"
-
-                    if [[ $left = "github.com/"* ]]
-                    then
-                        prefix="https://"
-                    else
-                        prefix=""
-                    fi
-                fi
-
-                local scriptPath="${right}"
-                local scriptName="${scriptPath%\?*}"
-                local repository
-                local directory
-
-                local version="${left##*\#}"
-
-                if [[ "${version}" == "${left}" ]]
-                then
-                    repository="${prefix}${url}"
-                    version=latest
-                else
-                    repository="${prefix}${url%%\#${version}}"
-                fi
-
-
-                if [[ "${version}" =~ ^${versionRegex}$ || "${version}" = "latest" ]]
-                then
-                    true
-                else
-                    MANAGE_ERROR invalidVersion "${repository}#${version}" "${versionRegex}"
-                fi
-
-                directory="${MANAGE_DOWNLOAD_DIRECTORY}/$(MANAGE_SHASUM "${repository}")"
-
-                if [[ -z "${MANAGE_MODULES["${script}"]}" ]]
-                then
-                    MANAGE_SPINNER "${repository} ${scriptPath}"
-
-                    MANAGE_GET_OR_DELETE "${repository}" "${version}" "${directory}"
-                    MANAGE_REPOSITORY_PATH "${repository}" "${directory}"
-
-                    scripts["${scriptName}"]="${script}"
-                fi
-            fi
-        fi
-    done
-
-    while read -d '' -r file
-    do
-        for script in "${!scripts[@]}"
-        do
-            if [[ "${file}" =~ ${script}$ ]] &&
-               [[ "$(head -n 1 "${file}")" =~ ^(#!){1}.*(bash){1}.* ]] &&
-               [[ "$(basename "${file}")" =~ ^[-_a-zA-Z0-9]*$ ]]
-            then
-                if [[ "${file}" == "${MANAGE_DOWNLOAD_DIRECTORY}/"* ]]
-                then
-                    remoteModules["${script}"]="${file}"
-                else
-                    manageModules["${script}"]="${file}"
-                fi
-            fi
-        done
-    done < <(find "${!managePaths[@]}" "${MANAGE_REMOTE_PATHS[@]}" -type f -print0 2> /dev/null)
-
-    for script in "${!manageModules[@]}"
-    do
-        local longName="${scripts["${script}"]}"
-
-        if ! MANAGE_IS_LOCAL "${longName}"
-        then
-            MANAGE_ERROR failImport "${longName}"
-        fi
-
-        file="${manageModules["${script}"]}"
-        imports["${file}"]=1
-
-        MANAGE_SOURCE "${mode}" "${file}" "${script}" "${longName}"
-        MANAGE_MODULES["${script}"]="${file}"
-    done
-
-    for script in "${!remoteModules[@]}"
-    do
-        file="${remoteModules["${script}"]}"
-        imports["${file}"]=1
-
-        MANAGE_SOURCE "${mode}" "${file}" "${script}" "${scripts["${script}"]}"
-        MANAGE_MODULES["${script}"]="${file}"
-    done
-
-    for script in "${!scripts[@]}"
-    do
-        [ -z "${MANAGE_MODULES["${script}"]}" ] && {
-            MANAGE_ERROR failImport "${script}"
-        }
-    done
-
-    if [ ! ${#imports[@]} -eq 0 ]
-    then
-        MANAGE_QUERY "${mode}" "${!imports[@]}"
-    fi
-
-    [[ "$(pwd)" = "${OPWD}" ]] || cd "${OPWD}"
-}
-
-MANAGE_RESOLVE_LOCAL () {
-    local mode="$1"; shift 1
-    local arguments
-    local script
-    local file
-
-    IFS=$'\n ' read -r -a arguments <<< "${@}"
-
-    declare -A localModules
-    declare -A manageModules
-    declare -A managePaths
-    declare -A imports
-    declare -A scripts
-
-    managePaths["${MANAGE_DIRECTORY}/modules"]="1"
-    [ -n "${MANAGE_MODULE_DIRECTORY}" ] && managePaths["${MANAGE_MODULE_DIRECTORY}"]="1"
-
-    for script in "${arguments[@]}"
-    do
-        [[ -n "${script}" ]] &&
-        [[ -z "${MANAGE_MODULES["${script}"]}" ]] && {
-            scripts["${script}"]=1
-            MANAGE_SPINNER "${script}"
-        }
-    done
-
-    while read -d '' -r file
-    do
-        for script in "${!scripts[@]}"
-        do
-            if [[ "${file}" =~ ${script}$ ]] &&
-               [[ "$(head -n 1 "${file}")" =~ ^(#!){1}.*(bash){1}.* ]] &&
-               [[ "$(basename "${file}")" =~ ^[-_a-zA-Z0-9]*$ ]]
-            then
-                if [[ "${file}" == "${MANAGE_DIRECTORY}/modules/"* ]]
-                then
-                    manageModules["${script}"]="${file}"
-                elif [[ -n "${MANAGE_MODULE_DIRECTORY}" ]] &&
-                     [[ "${MANAGE_MODULE_DIRECTORY}" != "${MANAGE_DIRECTORY}" ]] &&
-                     [[ "${file}" == "${MANAGE_MODULE_DIRECTORY}/"* ]]
-                then
-                    localModules["${script}"]="${file}"
-                fi
-            fi
-        done
-    done < <(find "${!managePaths[@]}" -type f -print0 2> /dev/null)
-
-    for script in "${!manageModules[@]}"
-    do
-        file="${manageModules["${script}"]}"
-        imports["${file}"]=1
-
-        MANAGE_SOURCE "${mode}" "${file}" "${script}"
-        MANAGE_MODULES["${script}"]="${file}"
-    done
-
-    for script in "${!localModules[@]}"
-    do
-        file="${localModules["${script}"]}"
-        imports["${file}"]=1
-
-        MANAGE_SOURCE "${mode}" "${file}" "${script}"
-        MANAGE_MODULES["${script}"]="${file}"
-    done
-
-    for script in "${!scripts[@]}"
-    do
-        if [ -z "${MANAGE_MODULES["${script}"]}" ]
-        then
-            if ! MANAGE_IS_LOCAL "${script}"
-            then
-                MANAGE_RESOLVE_REMOTE "${mode}" "${script}"
-            else
-                MANAGE_ERROR failImport "${script}"
-            fi
-        fi
-    done
-
-    if [ ! ${#imports[@]} -eq 0 ]
-    then
-        MANAGE_QUERY "${mode}" "${!imports[@]}"
-    fi
-}
-
-MANAGE_RESOLVE () {
-    local mode="$1"; shift 1
-    local arguments
-    local script
-
-    if [ -z "${MANAGE_REPOSITORY}" ] &&
-       [ -z "${MANAGE_DOWNLOAD_DIRECTORY}" ]
-    then
-        MANAGE_DOWNLOAD_DIRECTORY="${MANAGE_DIRECTORY}/.manage_modules"
-    else
-        MANAGE_DOWNLOAD_DIRECTORY="${MANAGE_REPOSITORY}/.manage_modules"
-    fi
-
-    IFS=$'\n ' read -r -a arguments <<< "${@}"
-
-    declare -A localModules
-    declare -A remoteModules
-
-    for script in "${arguments[@]}"
-    do
-        if [[ -n "${script}" ]]
-        then
-            if ! MANAGE_IS_LOCAL "${script}"
-            then
-                remoteModules["${script}"]=1
-            else
-                localModules["${script}"]=1
-            fi
-        fi
-    done
-
-    MANAGE_RESOLVE_LOCAL "${mode}" "${!localModules[@]}"
-    MANAGE_RESOLVE_REMOTE "${mode}" "${!remoteModules[@]}"
-}
-
-MANAGE_LOCAL () {
-    MANAGE_RESOLVE local "$@"
-}
-
-MANAGE_UNDERSCORE () {
-    MANAGE_RESOLVE underscore "$@"
-}
-
-MANAGE_ONCE () {
-    local __code=0
-    "$@" || __code="$?"
-    eval "$1"' () { return '"${__code}"'; }'
-    return "${__code}"
-}
-
-MANAGE_MAIN ()
-{
-    local _code
-
-    if declare -f "main" > /dev/null 2>&1
-    then
-        trap 'MANAGE_ONCE MANAGE_RETURN $?' INT HUP TERM QUIT EXIT
-        main "$@"
-        _code=$?
-        trap - INT HUP TERM QUIT EXIT ERR
-    fi
-
-    MANAGE_ONCE MANAGE_RETURN "${_code}"
-
-    return $?
-}
-
-MANAGE_RETURN ()
-{
-    local _code=${1:-0}
-    if declare -f "onExit" > /dev/null 2>&1
-    then
-        onExit "${_code}" || true
-    fi
-
-    return "${_code}"
-}
-
-MANAGE_ARCH () {
-    local arch
-
-    arch="$(uname -m)"
-
-    case "${arch}" in
-        # armv6*)
-        #     arch="arm"
-        #     ;;
-        x86_64)
-            arch="amd64"
-            ;;
-        x86)
-            arch="386"
-            ;;
-        i686)
-            arch="386"
-            ;;
-        i386)
-            arch="386"
-            ;;
-        arm64)
-            arch="arm64"
-            ;;
-        aarch64)
-            arch="arm64"
-            ;;
-        armv7*)
-            arch="arm"
-            ;;
-        *)
-            MANAGE_ERROR arch "${arch}"
-    esac
-
-    echo ${arch}
-}
-
-MANAGE_OS () {
-    local ostype
-
-    ostype="$(uname)"
-
-    case "${ostype}" in
-        Linux)
-            ostype="linux"
-            ;;
-        Darwin)
-            ostype="darwin"
-            ;;
-        FreeBSD)
-            ostype="freebsd"
-            ;;
-        NetBSD)
-            ostype="netbsd"
-            ;;
-        *MINGW* | *WIN32* | *CYGWIN*)
-            ostype="windows"
-            ;;
-        *)
-            MANAGE_ERROR os "${ostype}"
-    esac
-
-    echo ${ostype}
-}
-
-MANAGE_GET_YQ() {
-    local version="4.44.3"
-    local url
-    local binary="${MANAGE_BIN}/yq"
-    local localVersion
-    local download="true"
-
-    url="https://github.com/mikefarah/yq/releases/download/v${version}/yq_$(MANAGE_OS)_$(MANAGE_ARCH)"
-
-    if [[ -f "${binary}" ]]
-    then
-        localVersion="$("${binary}" --version 2>/dev/null)" || download=true
-        localVersion="${localVersion##"yq (https://github.com/mikefarah/yq/) version v"}"
-
-        if [[ "${localVersion}" == "${version}" ]]
-        then
-            download="false"
-        fi
-    fi
-
-    if [[ "${download}" == "true" ]]
-    then
-        {
-            if [[ "${MANAGE_INTERACTIVE}" == "true" ]]
-            then
-                curl -0 -S --progress-bar -L "${url}" -o "${MANAGE_BIN}/yq"
-            else
-                curl -0 -s -S -L "${url}" -o "${MANAGE_BIN}/yq"
-            fi
-        } || MANAGE_ERROR yq "${url}"
-
-        chmod +x "${MANAGE_BIN}/yq"
-
-        [[ "$("${MANAGE_BIN}/yq" --version)" == "yq (https://github.com/mikefarah/yq/) version v${version}" ]] &> /dev/null || MANAGE_ERROR yq "${url}"
-    fi
-}
-
-yq () {
-    "${MANAGE_BIN}/yq" "$@"
-}
-
-
-if [[ "${BASH_SOURCE[0]}" != "${0}" ]]
-then
-    MANAGE_IMPORT_ARRAY=(${MANAGE_IMPORT})
-
-    strict true
-
-    if [ ! ${#MANAGE_IMPORT_ARRAY[@]} -eq 0 ]
-    then
-        MANAGE_SPINNER enable
-
-        MANAGE_UNDERSCORE "${MANAGE_IMPORT_ARRAY[@]}"
-        MANAGE_BOOTSTRAP
-
-        MANAGE_SPINNER disable
-    fi
-
-    [ -n "${MANAGE_SCRIPT_PATH}" ] &&
-    source "${MANAGE_SCRIPT_PATH}"
-    MANAGE_MAIN "$@"
-else
-    strict true
-
-    resolvelink() {
-        $(type -p greadlink readlink | head -1) "$1"
+
+def retry_delay(headers: Any, body: str, attempt: int) -> Optional[int]:
+    retry_after = headers.get("Retry-After")
+    if retry_after and retry_after.isdigit():
+        return max(1, int(retry_after))
+
+    reset = headers.get("X-RateLimit-Reset")
+    remaining = headers.get("X-RateLimit-Remaining")
+    rate_limited = remaining == "0" or "rate limit" in body.lower()
+    if reset and reset.isdigit() and rate_limited:
+        return max(1, int(reset) - int(time.time()) + 2)
+    if rate_limited:
+        return min(60, 5 * (2**attempt))
+    return None
+
+
+def urlopen_with_retries(
+    request: urllib.request.Request, timeout: int, purpose: str
+) -> Any:
+    max_attempts = 4
+    for attempt in range(max_attempts):
+        try:
+            return urllib.request.urlopen(request, timeout=timeout)
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            delay = retry_delay(exc.headers, body, attempt)
+            if (
+                exc.code in (403, 429)
+                and delay is not None
+                and attempt < max_attempts - 1
+            ):
+                if delay > MAX_AUTOMATIC_RATE_LIMIT_SLEEP_SECONDS:
+                    raise fatal(
+                        "{0} is rate-limited for {1} seconds; try again after the reset".format(
+                            purpose, delay
+                        )
+                    )
+                warn(
+                    "{0} is rate-limited; waiting {1} seconds before retrying".format(
+                        purpose, delay
+                    )
+                )
+                time.sleep(delay)
+                continue
+            raise fatal(
+                "{0} failed for {1}: HTTP {2}: {3}".format(
+                    purpose, request.full_url, exc.code, body
+                )
+            )
+        except OSError as exc:
+            if attempt < max_attempts - 1:
+                delay = min(30, 2 * (attempt + 1))
+                warn(
+                    "{0} failed for {1}: {2}; retrying in {3} seconds".format(
+                        purpose, request.full_url, exc, delay
+                    )
+                )
+                time.sleep(delay)
+                continue
+            raise fatal(
+                "{0} failed for {1}: {2}".format(purpose, request.full_url, exc)
+            )
+    raise fatal("{0} failed for {1}".format(purpose, request.full_url))
+
+
+def warn_if_rate_limit_low(headers: Any) -> None:
+    global RATE_LIMIT_LOW_WARNED
+    if RATE_LIMIT_LOW_WARNED:
+        return
+    remaining = headers.get("X-RateLimit-Remaining")
+    reset = headers.get("X-RateLimit-Reset")
+    if remaining and remaining.isdigit() and int(remaining) <= 5:
+        RATE_LIMIT_LOW_WARNED = True
+        reset_text = ""
+        if reset and reset.isdigit():
+            reset_text = "; reset at {0}".format(
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(reset)))
+            )
+        warn(
+            "GitHub API rate limit is nearly exhausted ({0} remaining{1})".format(
+                remaining, reset_text
+            )
+        )
+
+
+def github_json(path: str) -> Any:
+    url = "{0}/{1}".format(GITHUB_API, path.lstrip("/"))
+    request = urllib.request.Request(url, headers=request_headers())
+    try:
+        with urlopen_with_retries(
+            request, timeout=30, purpose="GitHub API request"
+        ) as response:
+            warn_if_rate_limit_low(response.headers)
+            return json.loads(response.read().decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise fatal(
+            "GitHub API request returned invalid JSON for {0}: {1}".format(url, exc)
+        )
+
+
+def download_url(url: str, destination: Path) -> None:
+    request = urllib.request.Request(url, headers={"User-Agent": GITHUB_USER_AGENT})
+    with urlopen_with_retries(request, timeout=60, purpose="download") as response:
+        with destination.open("wb") as output:
+            shutil.copyfileobj(response, output)
+
+
+def signature_status(value: Any) -> SignatureStatus:
+    if not isinstance(value, dict):
+        return SignatureStatus(verified=False, reason="missing")
+    return SignatureStatus(
+        verified=bool(value.get("verified")),
+        reason=str(value.get("reason") or "unknown"),
+    )
+
+
+def commit_status_from_response(
+    repository: str, commit: str, data: Any
+) -> GitResolution:
+    if not isinstance(data, dict):
+        raise fatal(
+            "commit response for {0}@{1} was not an object".format(repository, commit)
+        )
+    sha = data.get("sha")
+    commit_data = data.get("commit")
+    verification: Any = {}
+    if isinstance(commit_data, dict):
+        verification = commit_data.get("verification", {})
+    if not isinstance(sha, str):
+        raise fatal(
+            "commit response for {0}@{1} did not include a sha".format(
+                repository, commit
+            )
+        )
+    return GitResolution(
+        commit=sha,
+        tag_object=None,
+        tag_signature=None,
+        commit_signature=signature_status(verification),
+    )
+
+
+def resolve_by_commit_api(tool: Tool, include_commit_signature: bool) -> GitResolution:
+    data = github_json(
+        "repos/{0}/commits/{1}".format(
+            tool.repository, urllib.parse.quote(tool.tag, safe="")
+        )
+    )
+    resolution = commit_status_from_response(tool.repository, tool.tag, data)
+    if include_commit_signature:
+        return resolution
+    return GitResolution(
+        commit=resolution.commit,
+        tag_object=None,
+        tag_signature=None,
+        commit_signature=None,
+    )
+
+
+def resolve_by_tag_api(tool: Tool, include_commit_signature: bool) -> GitResolution:
+    ref = github_json(
+        "repos/{0}/git/ref/tags/{1}".format(
+            tool.repository, urllib.parse.quote(tool.tag, safe="")
+        )
+    )
+    obj = ref.get("object") if isinstance(ref, dict) else None
+    if not isinstance(obj, dict):
+        raise fatal(
+            "tag ref {0}@{1} did not include an object".format(
+                tool.repository, tool.tag
+            )
+        )
+    tag_object = obj.get("sha")
+    object_type = obj.get("type")
+    if not isinstance(tag_object, str):
+        raise fatal(
+            "tag ref {0}@{1} did not include an object sha".format(
+                tool.repository, tool.tag
+            )
+        )
+    if object_type != "tag":
+        raise fatal("{0} tag {1} is not an annotated tag".format(tool.name, tool.tag))
+    if tool.tag_object and tag_object != tool.tag_object:
+        raise fatal(
+            "{0} tag object resolved to {1}, expected {2}".format(
+                tool.name, tag_object, tool.tag_object
+            )
+        )
+    tag_data = github_json("repos/{0}/git/tags/{1}".format(tool.repository, tag_object))
+    nested = tag_data.get("object") if isinstance(tag_data, dict) else None
+    if not isinstance(nested, dict):
+        raise fatal("tag object {0} did not include a target object".format(tag_object))
+    commit = nested.get("sha")
+    nested_type = nested.get("type")
+    if nested_type != "commit" or not isinstance(commit, str):
+        raise fatal("tag object {0} does not point to a commit".format(tag_object))
+    tag_signature = signature_status(
+        tag_data.get("verification") if isinstance(tag_data, dict) else None
+    )
+    commit_signature = None
+    if include_commit_signature:
+        commit_data = github_json(
+            "repos/{0}/commits/{1}".format(
+                tool.repository, urllib.parse.quote(commit, safe="")
+            )
+        )
+        commit_resolution = commit_status_from_response(
+            tool.repository, commit, commit_data
+        )
+        commit_signature = commit_resolution.commit_signature
+    return GitResolution(
+        commit=commit,
+        tag_object=tag_object,
+        tag_signature=tag_signature,
+        commit_signature=commit_signature,
+    )
+
+
+def verify_signature_expectation(
+    tool: Tool, kind: str, requirement: str, status: Optional[SignatureStatus]
+) -> None:
+    if requirement == "not_applicable":
+        return
+    reason = (
+        tool.commit_signature_exception
+        if kind == "commit"
+        else tool.tag_signature_exception
+    )
+    if status is None:
+        if requirement in ("allow_unsigned", "allow_unverified") and reason:
+            return
+        raise fatal("{0} {1} signature was not checked".format(tool.name, kind))
+    if requirement == "required":
+        if not status.verified:
+            raise fatal(
+                "{0} {1} signature is not verified by GitHub: {2}".format(
+                    tool.name, kind, status.reason
+                )
+            )
+        return
+    if requirement == "allow_unsigned":
+        if status.verified:
+            return
+        if status.reason != "unsigned":
+            raise fatal(
+                "{0} {1} signature is {2}, not unsigned".format(
+                    tool.name, kind, status.reason
+                )
+            )
+    elif requirement == "allow_unverified":
+        if status.verified:
+            return
+    else:
+        raise fatal("unknown {0} signature requirement: {1}".format(kind, requirement))
+
+    if not reason:
+        raise fatal(
+            "{0} {1} signature exception is missing for {2}".format(
+                tool.name, kind, requirement
+            )
+        )
+    warn(
+        "{0}: accepting {1} signature state ({2}): {3}".format(
+            tool.name, kind, status.reason, reason
+        )
+    )
+
+
+def commit_signature_needs_api(tool: Tool) -> bool:
+    if tool.commit_signature == "required":
+        return True
+    if tool.commit_signature == "allow_unverified":
+        return True
+    if (
+        tool.commit_signature == "allow_unsigned"
+        and tool.tag_signature == "not_applicable"
+    ):
+        return True
+    return False
+
+
+def verify_tag_and_commit(tool: Tool, check_signature: bool = True) -> None:
+    include_commit_signature = check_signature and commit_signature_needs_api(tool)
+    if check_signature and tool.tag_signature == "required":
+        resolution = resolve_by_tag_api(tool, include_commit_signature)
+    else:
+        resolution = resolve_by_commit_api(tool, include_commit_signature)
+    if resolution.commit != tool.commit:
+        raise fatal(
+            "{0} tag {1} resolved to {2}, expected {3}".format(
+                tool.name, tool.tag, resolution.commit, tool.commit
+            )
+        )
+    if not check_signature:
+        return
+    verify_signature_expectation(
+        tool, "tag", tool.tag_signature, resolution.tag_signature
+    )
+    verify_signature_expectation(
+        tool, "commit", tool.commit_signature, resolution.commit_signature
+    )
+
+
+def parse_checksums(text: str) -> Dict[str, str]:
+    checksums = {}
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        digest = parts[0].strip()
+        if not re.fullmatch(r"[A-Fa-f0-9]{64}", digest):
+            continue
+        raw_name = parts[1].lstrip("*")
+        name = Path(raw_name).name
+        checksums[name] = digest.lower()
+        checksums[raw_name] = digest.lower()
+    return checksums
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_file_sha256(path: Path, expected: str) -> None:
+    actual = sha256_file(path)
+    if actual.lower() != expected.lower():
+        raise fatal(
+            "SHA-256 mismatch for {0}: expected {1}, got {2}".format(
+                path, expected, actual
+            )
+        )
+
+
+def manifest_checksum(manifest_path: Path, asset: str) -> str:
+    checksums = parse_checksums(manifest_path.read_text(encoding="utf-8"))
+    checksum = checksums.get(asset) or checksums.get(Path(asset).name)
+    if not checksum:
+        raise fatal(
+            "checksum manifest {0} did not include {1}".format(manifest_path, asset)
+        )
+    return checksum
+
+
+def sanitized_environment() -> Dict[str, str]:
+    env = os.environ.copy()
+    for name in ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_OAUTH_TOKEN"):
+        env.pop(name, None)
+    return env
+
+
+def terminate_process(process: Any) -> None:
+    with contextlib.suppress(ProcessLookupError, OSError):
+        os.killpg(process.pid, signal.SIGTERM)
+    with contextlib.suppress(subprocess.TimeoutExpired):
+        process.wait(timeout=5)
+        return
+    with contextlib.suppress(ProcessLookupError, OSError):
+        os.killpg(process.pid, signal.SIGKILL)
+    with contextlib.suppress(OSError):
+        process.wait(timeout=5)
+
+
+def run_command(
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+    stdout: Optional[Any] = None,
+    stderr: Optional[Any] = None,
+) -> None:
+    process: Any = None
+    try:
+        process = subprocess.Popen(
+            list(command),
+            cwd=str(cwd) if cwd else None,
+            env=sanitized_environment(),
+            stdout=stdout,
+            stderr=stderr,
+            start_new_session=True,
+        )
+        return_code = process.wait()
+    except OSError as exc:
+        raise fatal("unable to run {0}: {1}".format(command[0], exc))
+    except BaseException:
+        if process is not None and process.poll() is None:
+            terminate_process(process)
+        raise
+    if return_code != 0:
+        raise fatal(
+            "command failed with exit code {0}: {1}".format(
+                return_code, " ".join(command)
+            )
+        )
+
+
+def check_external_tools(tools: Iterable[str]) -> None:
+    missing = sorted({tool for tool in tools if shutil.which(tool) is None})
+    if missing:
+        raise fatal("missing required command(s): {0}".format(", ".join(missing)))
+
+
+def version_data(tool: Tool, asset: str) -> Dict[str, str]:
+    return {
+        "name": tool.name,
+        "version": tool.version,
+        "tag": tool.tag,
+        "commit": tool.commit,
+        "asset": asset,
     }
 
-    absolutedirectorypath() {
-        local cwd
-        local path="$1"
 
-        cwd="$(pwd)"
+def read_version_file(path: Path) -> Dict[str, str]:
+    parser = configparser.ConfigParser()
+    try:
+        with path.open("r", encoding="utf-8") as stream:
+            parser.read_file(stream)
+    except (OSError, configparser.Error):
+        return {}
+    if not parser.has_section("install"):
+        return {}
+    return {key: value for key, value in parser.items("install")}
 
-        while [ -n "$path" ]; do
-            cd "${path%/*}" || exit
-            local name="${path##*/}"
-            path="$(resolvelink "$name" || true)"
-        done
 
-        pwd
-        cd "${cwd}" || exit
-    }
+def write_version_file(path: Path, data: Mapping[str, str]) -> None:
+    parser = configparser.ConfigParser()
+    parser["install"] = dict(data)
+    with path.open("w", encoding="utf-8") as stream:
+        parser.write(stream)
 
-    expandpath() {
-        { cd "$(dirname "$1")" 2>/dev/null
-            local dirname="$PWD"
-            cd "$OLDPWD"
-            echo "$dirname/$(basename "$1")"
-        } || echo "$1"
-    }
 
-    # shellcheck disable=SC2034
+def is_executable_file(path: Path) -> bool:
+    return path.is_file() and os.access(str(path), os.X_OK)
 
-    MANAGE_CWD="$(absolutedirectorypath .)"
-    MANAGE_ZERO="$(expandpath "$0")"
-    MANAGE_DIRECTORY="$(absolutedirectorypath "${MANAGE_ZERO}")"
-    LC_ALL=C
 
-    if [[ ! -f "${MANAGE_DIRECTORY}/.manage_modules/.manage-directory" ]]
-    then
-        MANAGE_DIRECTORY="${MANAGE_DIRECTORY}/.manage_modules/manage"
+def set_executable(path: Path) -> None:
+    mode = path.stat().st_mode
+    path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-        MANAGE_GET_OR_DELETE "https://github.com/escapace/manage.git" "${MANAGE_VERSION}" "${MANAGE_DIRECTORY}" false
-    fi
 
-    MANAGE_BIN="${MANAGE_DIRECTORY}/.manage_modules/bin"
-    [[ ! -d "${MANAGE_BIN}" ]] && mkdir -p "${MANAGE_BIN}"
+def tool_directory(paths: InstallPaths, tool: Tool) -> Path:
+    return paths.vendor / tool.name
 
-    MANAGE_GET_YQ
 
-    declare -A MANAGE_SCRIPTS
+def expected_binary_path(
+    paths: InstallPaths, tool: Tool, platform: Platform, binary: BinarySpec
+) -> Path:
+    if tool.install_layout == "archive":
+        return tool_directory(paths, tool) / binary.source_path(platform)
+    return tool_directory(paths, tool) / binary.output_name
 
-    MANAGE_SPINNER enable
 
-    MANAGE_LOCAL \
-        manage/checkFileDependencies \
-        manage/collectScripts \
-        manage/help
+def link_points_inside_repository(link: Path, repository: Path) -> bool:
+    if not link.is_symlink():
+        return False
+    try:
+        target = link.resolve(strict=False)
+        repo = repository.resolve(strict=False)
+    except OSError:
+        return False
+    return target == repo or repo in target.parents
 
-    MANAGE_SPINNER disable
 
-    checkFileDependencies "${MANAGE_ZERO}"
-    collectScripts "$@"
-fi
+def ensure_bin_link(paths: InstallPaths, binary_name: str, target: Path) -> None:
+    paths.bin.mkdir(parents=True, exist_ok=True)
+    link = paths.bin / binary_name
+    if link.is_symlink():
+        current = link.resolve(strict=False)
+        if current == target.resolve(strict=False):
+            return
+        if link_points_inside_repository(link, paths.repository):
+            link.unlink()
+        else:
+            raise fatal(
+                "refusing to replace symlink outside this repository: {0}".format(link)
+            )
+    elif link.exists():
+        raise fatal("refusing to overwrite non-symlink: {0}".format(link))
+    try:
+        os.symlink(str(target), str(link))
+    except OSError as exc:
+        raise fatal("unable to link {0} to {1}: {2}".format(link, target, exc))
+
+
+def ensure_tool_links(paths: InstallPaths, tool: Tool, platform: Platform) -> None:
+    for binary in tool.binaries:
+        target = expected_binary_path(paths, tool, platform, binary)
+        ensure_bin_link(paths, binary.output_name, target)
+
+
+def installed_payload_ok(paths: InstallPaths, tool: Tool, platform: Platform) -> bool:
+    directory = tool_directory(paths, tool)
+    asset = asset_name(tool, platform)
+    if read_version_file(directory / "version") != version_data(tool, asset):
+        return False
+    for binary in tool.binaries:
+        if not is_executable_file(expected_binary_path(paths, tool, platform, binary)):
+            return False
+    return True
+
+
+def installed_state_ok(paths: InstallPaths, tool: Tool, platform: Platform) -> bool:
+    if not installed_payload_ok(paths, tool, platform):
+        return False
+    ensure_tool_links(paths, tool, platform)
+    return True
+
+
+def process_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def cleanup_stale_staging(paths: InstallPaths, tools: Iterable[Tool]) -> None:
+    if not paths.vendor.is_dir():
+        return
+    tool_names = {tool.name for tool in tools}
+    for path in paths.vendor.iterdir():
+        parts = path.name.split(".")
+        if len(parts) < 4 or parts[0] != "" or parts[1] not in tool_names:
+            continue
+        tool_name = parts[1]
+        if parts[2] == "previous":
+            if len(parts) < 5 or not parts[3].isdigit():
+                continue
+            pid = int(parts[3])
+            destination = paths.vendor / tool_name
+            if process_is_alive(pid):
+                continue
+            if destination.exists() or destination.is_symlink():
+                warn("removing stale backup {0}".format(path))
+                remove_path(path)
+            else:
+                warn("restoring stale backup {0}".format(path))
+                path.rename(destination)
+            continue
+        if not parts[2].isdigit():
+            continue
+        pid = int(parts[2])
+        if process_is_alive(pid):
+            continue
+        warn("removing stale staging directory {0}".format(path))
+        remove_path(path)
+
+
+@contextlib.contextmanager
+def staging_directory(paths: InstallPaths, tool: Tool) -> Iterator[Path]:
+    paths.vendor.mkdir(parents=True, exist_ok=True)
+    temp = tempfile.TemporaryDirectory(
+        prefix=".{0}.{1}.".format(tool.name, os.getpid()), dir=str(paths.vendor)
+    )
+    try:
+        yield Path(temp.name)
+    finally:
+        temp.cleanup()
+
+
+def remove_path(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(str(path))
+
+
+def replace_tool_directory(
+    paths: InstallPaths, tool: Tool, staged_install: Path
+) -> None:
+    destination = tool_directory(paths, tool)
+    backup: Optional[Path] = None
+    existing_was_moved = False
+    try:
+        if destination.exists() or destination.is_symlink():
+            backup = paths.vendor / ".{0}.previous.{1}.{2}".format(
+                tool.name, os.getpid(), time.time_ns()
+            )
+            destination.rename(backup)
+            existing_was_moved = True
+        staged_install.rename(destination)
+    except BaseException as exc:
+        if existing_was_moved and backup is not None and not destination.exists():
+            with contextlib.suppress(OSError):
+                backup.rename(destination)
+        if isinstance(exc, OSError):
+            raise fatal("unable to install {0}: {1}".format(destination, exc))
+        raise
+    if backup is not None and (backup.exists() or backup.is_symlink()):
+        remove_path(backup)
+
+
+def stripped_relative_path(path: Path, strip_components: int) -> Optional[Path]:
+    if strip_components <= 0:
+        return path
+    parts = path.parts[strip_components:]
+    if not parts:
+        return None
+    return Path(*parts)
+
+
+def copy_extracted_tree(source: Path, destination: Path, strip_components: int) -> None:
+    for path in sorted(source.rglob("*")):
+        relative = path.relative_to(source)
+        stripped = stripped_relative_path(relative, strip_components)
+        if stripped is None:
+            continue
+        target = destination / stripped
+        if path.is_symlink():
+            if target.exists() or target.is_symlink():
+                raise fatal("archive extraction collision at {0}".format(target))
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(path), str(target))
+        elif path.is_dir():
+            if target.exists() and not target.is_dir():
+                raise fatal("archive extraction collision at {0}".format(target))
+            target.mkdir(parents=True, exist_ok=True)
+        elif path.is_file():
+            if target.exists() or target.is_symlink():
+                raise fatal("archive extraction collision at {0}".format(target))
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(path), str(target))
+
+
+def prepare_extracted_tree(source: Path, work_dir: Path, strip_components: int) -> Path:
+    if strip_components <= 0:
+        return source
+    stripped = work_dir / "stripped"
+    stripped.mkdir(parents=True, exist_ok=True)
+    copy_extracted_tree(source, stripped, strip_components)
+    return stripped
+
+
+def find_extracted_file(
+    root: Path, tool: Tool, binary: BinarySpec, platform: Platform
+) -> Path:
+    source_path = Path(binary.source_path(platform))
+    if len(source_path.parts) > 1:
+        exact = root / source_path
+        if exact.is_file():
+            return exact
+        raise fatal("extracted archive did not contain {0}".format(source_path))
+    candidates = sorted(path for path in root.rglob(str(source_path)) if path.is_file())
+    if not candidates:
+        raise fatal("extracted archive did not contain {0}".format(source_path))
+    return candidates[0]
+
+
+def extract_archive(kind: str, archive: Path, extract_dir: Path) -> None:
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    if kind == "tar.gz":
+        run_command(["tar", "-xzf", str(archive), "-C", str(extract_dir)])
+    elif kind == "zip":
+        run_command(["unzip", "-oqq", str(archive), "-d", str(extract_dir)])
+    else:
+        raise fatal("unsupported archive kind: {0}".format(kind))
+
+
+def install_kind_for_asset(asset: str) -> str:
+    if asset.endswith(".tar.gz"):
+        return "tar.gz"
+    if asset.endswith(".zip"):
+        return "zip"
+    if asset.endswith(".bz2"):
+        return "bz2"
+    return "direct"
+
+
+def install_downloaded_asset(
+    tool: Tool, platform: Platform, downloaded: Path, install_dir: Path, work_dir: Path
+) -> None:
+    kind = install_kind_for_asset(asset_name(tool, platform))
+
+    if kind == "direct":
+        if len(tool.binaries) != 1:
+            raise fatal(
+                "direct install requires exactly one binary for {0}".format(tool.name)
+            )
+        target = install_dir / tool.binaries[0].output_name
+        shutil.copy2(str(downloaded), str(target))
+        set_executable(target)
+        return
+
+    if kind == "bz2":
+        if len(tool.binaries) != 1:
+            raise fatal(
+                "bz2 install requires exactly one binary for {0}".format(tool.name)
+            )
+        target = install_dir / tool.binaries[0].output_name
+        with target.open("wb") as output:
+            run_command(["bunzip2", "-c", str(downloaded)], stdout=output)
+        set_executable(target)
+        return
+
+    extract_dir = work_dir / "extract"
+    extract_archive(kind, downloaded, extract_dir)
+    if tool.install_layout == "archive":
+        copy_extracted_tree(extract_dir, install_dir, tool.strip_components)
+        for binary in tool.binaries:
+            target = install_dir / binary.source_path(platform)
+            if not target.is_file():
+                raise fatal("archive install did not contain {0}".format(target))
+            set_executable(target)
+        return
+    if tool.install_layout != "binaries":
+        raise fatal(
+            "unsupported install layout for {0}: {1}".format(
+                tool.name, tool.install_layout
+            )
+        )
+    prepared_extract_dir = prepare_extracted_tree(
+        extract_dir, work_dir, tool.strip_components
+    )
+    for binary in tool.binaries:
+        source = find_extracted_file(prepared_extract_dir, tool, binary, platform)
+        target = install_dir / binary.output_name
+        shutil.copy2(str(source), str(target))
+        set_executable(target)
+
+
+def release_download_url(tool: Tool, name: str) -> str:
+    quoted_tag = urllib.parse.quote(tool.tag, safe="")
+    quoted_name = urllib.parse.quote(name, safe="")
+    return "https://github.com/{0}/releases/download/{1}/{2}".format(
+        tool.repository, quoted_tag, quoted_name
+    )
+
+
+def download_release_asset(tool: Tool, name: str, destination: Path) -> None:
+    info("downloading {0}".format(name))
+    download_url(release_download_url(tool, name), destination)
+
+
+def verify_checksum_signature(
+    paths: InstallPaths,
+    tool: Tool,
+    checksum: ChecksumSpec,
+    manifest: Path,
+    work_dir: Path,
+) -> None:
+    if not checksum.verify_sigstore:
+        return
+
+    cosign = paths.vendor / "cosign" / "cosign"
+    if not is_executable_file(cosign):
+        raise fatal(
+            "{0} requires vendored cosign for checksum verification".format(tool.name)
+        )
+
+    if checksum.sigstore_bundle_name:
+        bundle_name = format_template(checksum.sigstore_bundle_name, tool)
+        bundle = work_dir / bundle_name
+        download_release_asset(tool, bundle_name, bundle)
+        command = [str(cosign), "verify-blob", "--bundle", str(bundle)]
+        if checksum.bundle_identity:
+            command.extend(["--certificate-identity", checksum.bundle_identity])
+        if checksum.bundle_identity_regexp:
+            command.extend(
+                ["--certificate-identity-regexp", checksum.bundle_identity_regexp]
+            )
+        if checksum.bundle_issuer:
+            command.extend(["--certificate-oidc-issuer", checksum.bundle_issuer])
+        command.append(str(manifest))
+        run_command(command)
+        return
+
+    if checksum.certificate_name and checksum.signature_name:
+        certificate_name = format_template(checksum.certificate_name, tool)
+        signature_name = format_template(checksum.signature_name, tool)
+        certificate = work_dir / certificate_name
+        signature = work_dir / signature_name
+        download_release_asset(tool, certificate_name, certificate)
+        download_release_asset(tool, signature_name, signature)
+        command = [
+            str(cosign),
+            "verify-blob",
+            str(manifest),
+            "--certificate",
+            str(certificate),
+            "--signature",
+            str(signature),
+        ]
+        if checksum.certificate_identity_regexp:
+            command.extend(
+                ["--certificate-identity-regexp", checksum.certificate_identity_regexp]
+            )
+        if checksum.certificate_issuer:
+            command.extend(["--certificate-oidc-issuer", checksum.certificate_issuer])
+        run_command(command)
+        return
+
+    raise fatal("{0} has incomplete Sigstore verification metadata".format(tool.name))
+
+
+def prepare_checksum(
+    paths: InstallPaths,
+    tool: Tool,
+    selected_asset: str,
+    work_dir: Path,
+) -> Optional[str]:
+    if tool.checksum is None:
+        reason = tool.missing_checksum_exception
+        if not reason:
+            raise fatal("{0} has no checksum manifest configured".format(tool.name))
+        warn("{0}: accepting missing checksum manifest: {1}".format(tool.name, reason))
+        return None
+
+    manifest_name = format_template(tool.checksum.asset_name, tool)
+    manifest = work_dir / manifest_name
+    download_release_asset(tool, manifest_name, manifest)
+    verify_checksum_signature(paths, tool, tool.checksum, manifest, work_dir)
+    return manifest_checksum(manifest, selected_asset)
+
+
+def install_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
+    if installed_state_ok(paths, tool, platform):
+        info("{0} {1} already installed".format(tool.name, tool.version))
+        return
+
+    if tool.name == "fetch":
+        install_fetch(paths, platform, tool)
+    else:
+        install_regular_tool(paths, platform, tool)
+
+
+def install_fetch(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
+    selected_asset = asset_name(tool, platform)
+    info("installing {0} {1}".format(tool.name, tool.version))
+    verify_tag_and_commit(tool)
+
+    with staging_directory(paths, tool) as stage:
+        work = stage / "work"
+        install_dir = stage / "install"
+        work.mkdir(parents=True)
+        install_dir.mkdir(parents=True)
+        checksum = prepare_checksum(paths, tool, selected_asset, work)
+        if checksum is None:
+            raise fatal("fetch bootstrap requires SHA-256 verification")
+        downloaded = work / selected_asset
+        download_release_asset(tool, selected_asset, downloaded)
+        verify_tag_and_commit(tool, check_signature=False)
+        verify_file_sha256(downloaded, checksum)
+        install_downloaded_asset(tool, platform, downloaded, install_dir, work)
+        write_version_file(install_dir / "version", version_data(tool, selected_asset))
+        replace_tool_directory(paths, tool, install_dir)
+    ensure_tool_links(paths, tool, platform)
+
+
+def install_regular_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
+    selected_asset = asset_name(tool, platform)
+    info("installing {0} {1}".format(tool.name, tool.version))
+    verify_tag_and_commit(tool)
+
+    with staging_directory(paths, tool) as stage:
+        work = stage / "work"
+        downloads = work / "downloads"
+        install_dir = stage / "install"
+        work.mkdir(parents=True)
+        install_dir.mkdir(parents=True)
+        if tool.checksum is None:
+            reason = tool.missing_checksum_exception
+            if not reason:
+                raise fatal("{0} has no checksum manifest configured".format(tool.name))
+            warn(
+                "{0}: accepting missing checksum manifest: {1}".format(
+                    tool.name, reason
+                )
+            )
+            checksum = None
+        else:
+            checksum = prepare_checksum(paths, tool, selected_asset, work)
+            verify_tag_and_commit(tool, check_signature=False)
+        downloaded = downloads / selected_asset
+        downloads.mkdir(parents=True, exist_ok=True)
+        download_release_asset(tool, selected_asset, downloaded)
+        verify_tag_and_commit(tool, check_signature=False)
+        if checksum:
+            verify_file_sha256(downloaded, checksum)
+        install_downloaded_asset(tool, platform, downloaded, install_dir, work)
+        write_version_file(install_dir / "version", version_data(tool, selected_asset))
+        replace_tool_directory(paths, tool, install_dir)
+    ensure_tool_links(paths, tool, platform)
+
+
+def resolve_install_name(name: str, tools: Mapping[str, Tool]) -> Optional[str]:
+    if name in tools:
+        return name
+    if name in ALIASES:
+        return ALIASES[name]
+    for tool in tools.values():
+        if name in tool.aliases:
+            return tool.name
+    return None
+
+
+def resolved_install_order(
+    names: Sequence[str], tools: Mapping[str, Tool]
+) -> List[str]:
+    resolved = []
+    temporary: Set[str] = set()
+    permanent: Set[str] = set()
+
+    def visit(name: str) -> None:
+        if name not in tools:
+            raise fatal("unknown dependency: {0}".format(name))
+        if name in permanent:
+            return
+        if name in temporary:
+            raise fatal("cyclic dependency involving {0}".format(name))
+        temporary.add(name)
+        for dependency in tools[name].dependencies:
+            visit(dependency)
+        temporary.remove(name)
+        permanent.add(name)
+        resolved.append(name)
+
+    for name in names:
+        visit(name)
+    return resolved
+
+
+def preflight_tools(
+    paths: InstallPaths,
+    names: Sequence[str],
+    tools: Mapping[str, Tool],
+    platform: Platform,
+) -> None:
+    required = []
+    for name in resolved_install_order(names, tools):
+        tool = tools[name]
+        if not installed_payload_ok(paths, tool, platform):
+            required.extend(tool.required_external_tools(platform))
+    check_external_tools(required)
+
+
+def valid_names_message(tools: Mapping[str, Tool]) -> str:
+    names = ", ".join(sorted(tools))
+    alias_pairs = [
+        "{0}->{1}".format(alias, target) for alias, target in sorted(ALIASES.items())
+    ]
+    for tool in tools.values():
+        for alias in tool.aliases:
+            alias_pairs.append("{0}->{1}".format(alias, tool.name))
+    aliases = ", ".join(sorted(set(alias_pairs)))
+    return "valid install names: {0}\naliases: {1}".format(names, aliases or "none")
+
+
+def install_tool_names(
+    paths: InstallPaths,
+    platform: Platform,
+    tools: Mapping[str, Tool],
+    requested: Sequence[str],
+) -> None:
+    canonical = []
+    for name in requested:
+        resolved = resolve_install_name(name, tools)
+        if resolved is None:
+            raise fatal(
+                "unknown install name: {0}\n{1}".format(
+                    name, valid_names_message(tools)
+                )
+            )
+        canonical.append(resolved)
+    ordered = resolved_install_order(canonical, tools)
+    cleanup_stale_staging(paths, (tools[name] for name in ordered))
+    preflight_tools(paths, canonical, tools, platform)
+    for name in ordered:
+        install_tool(paths, platform, tools[name])
+
+
+def runcom_files(source_dir: Path) -> List[Path]:
+    files = []
+    if not source_dir.is_dir():
+        raise fatal("runcom source is not a directory: {0}".format(source_dir))
+    for root, dirs, names in os.walk(str(source_dir), followlinks=False):
+        dirs.sort()
+        for name in list(dirs):
+            path = Path(root) / name
+            if path.is_symlink():
+                files.append(path)
+                dirs.remove(name)
+        for name in sorted(names):
+            path = Path(root) / name
+            if path.is_file() or path.is_symlink():
+                files.append(path)
+    return files
+
+
+def target_for_runcom(home: Path, source_dir: Path, source: Path) -> Path:
+    relative = source.relative_to(source_dir)
+    return home / relative
+
+
+def backup_fish_if_needed(paths: InstallPaths) -> None:
+    fish = paths.home / ".config" / "fish"
+    if not fish.exists() or fish.is_symlink():
+        return
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+    backup = fish.with_name("fish.backup-{0}".format(timestamp))
+    suffix = 1
+    while backup.exists():
+        backup = fish.with_name("fish.backup-{0}-{1}".format(timestamp, suffix))
+        suffix += 1
+    warn("moving {0} to {1}".format(fish, backup))
+    fish.rename(backup)
+
+
+def install_runcoms(paths: InstallPaths, source_dir: Path) -> None:
+    for source in runcom_files(source_dir):
+        target = target_for_runcom(paths.home, source_dir, source)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.is_symlink():
+            info("Removing {0}".format(target))
+            target.unlink()
+        if target.exists():
+            warn("Omitting {0}".format(target))
+            continue
+        info("Linking {0}".format(target))
+        os.symlink(str(source), str(target))
+
+
+def clean_runcoms(paths: InstallPaths, source_dir: Path) -> None:
+    for source in runcom_files(source_dir):
+        target = target_for_runcom(paths.home, source_dir, source)
+        if target.is_symlink():
+            info("Removing {0}".format(target))
+            target.unlink()
+
+
+def install_context_engineering(paths: InstallPaths, explicit: bool) -> None:
+    if not paths.is_canonical():
+        raise fatal(
+            "context-engineering install requires {0}".format(
+                paths.canonical_repository
+            )
+        )
+    destination = paths.vendor / "context-engineering"
+    existed = destination.exists()
+    if not existed:
+        try:
+            check_external_tools(["git"])
+            run_command(
+                ["git", "clone", CONTEXT_ENGINEERING_REPOSITORY, str(destination)]
+            )
+        except ManageError:
+            if explicit:
+                raise
+            warn("unable to clone context-engineering; continuing")
+            return
+    try:
+        install_runcoms(paths, destination / "lib")
+    except ManageError:
+        if explicit or existed:
+            raise
+        warn("unable to install context-engineering runcoms; continuing")
+
+
+def install_default(
+    paths: InstallPaths, platform: Platform, tools: Mapping[str, Tool]
+) -> None:
+    install_tool_names(paths, platform, tools, list(DEFAULT_INSTALL))
+    if not paths.is_canonical():
+        warn(
+            "not running from {0}; skipping runcom, fish, and context-engineering home changes".format(
+                paths.canonical_repository
+            )
+        )
+        return
+    backup_fish_if_needed(paths)
+    install_runcoms(paths, paths.repository / "runcoms")
+    install_context_engineering(paths, explicit=False)
+
+
+def clean(paths: InstallPaths) -> None:
+    if not paths.is_canonical():
+        raise fatal(
+            "clean requires canonical repository path: {0}".format(
+                paths.canonical_repository
+            )
+        )
+    clean_runcoms(paths, paths.repository / "runcoms")
+
+
+def raise_keyboard_interrupt(signum: int, frame: Optional[Any]) -> None:
+    raise KeyboardInterrupt("received signal {0}".format(signum))
+
+
+def install_signal_handlers() -> None:
+    for signal_name in ("SIGTERM", "SIGHUP"):
+        signum = getattr(signal, signal_name, None)
+        if signum is not None:
+            signal.signal(signum, raise_keyboard_interrupt)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="manage")
+    subparsers = parser.add_subparsers(dest="command", title="commands")
+    install_parser = subparsers.add_parser("install", help="install tools and runcoms")
+    install_parser.add_argument("name", nargs="?", help="optional tool name to install")
+    subparsers.add_parser("clean", help="clean runcom symlinks")
+    return parser
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    try:
+        install_signal_handlers()
+        paths = InstallPaths(repository=repository_dir(), home=home_dir())
+        platform = current_platform()
+        tools = TOOLS
+        parser = build_parser()
+        args = parser.parse_args(argv)
+        if args.command == "install":
+            if args.name == "context-engineering":
+                install_context_engineering(paths, explicit=True)
+            elif args.name:
+                install_tool_names(paths, platform, tools, [args.name])
+            else:
+                install_default(paths, platform, tools)
+            return 0
+        if args.command == "clean":
+            clean(paths)
+            return 0
+        parser.print_help()
+        return 0
+    except KeyboardInterrupt as exc:
+        print("interrupted: {0}".format(exc), file=sys.stderr)
+        return 130
+    except ManageError as exc:
+        print("error: {0}".format(exc), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

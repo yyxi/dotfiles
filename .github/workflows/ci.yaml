@@ -1,0 +1,53 @@
+name: ci
+on:
+  push:
+    branches:
+      - trunk
+    paths:
+      - 'manage'
+  pull_request:
+    branches:
+      - trunk
+    paths:
+      - 'manage'
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+            **/pyproject.toml
+          enable-cache: true
+          ignore-nothing-to-cache: true
+          version: 'latest'
+      - name: system dependencies
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y bzip2 tar unzip git
+          else
+            command -v bunzip2
+            command -v tar
+            command -v unzip
+            command -v git
+          fi
+      - name: python dependencies
+        run: uv sync --locked
+      - name: python checks
+        run: |
+          uv run ruff format --check manage
+          uv run ruff check manage
+          uv run ty check manage
+      - name: install
+        run: ./manage install
