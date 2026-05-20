@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env -S fish --no-config
 
 if test (count $argv) -ne 3
     echo "usage: git/difftool MERGED LOCAL REMOTE" >&2
