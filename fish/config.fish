@@ -170,6 +170,8 @@ end
 set --universal fish_should_add_to_history_patterns \
   'ACCESS_KEY' \
   'ACCESS_TOKEN' \
+  'ACCOUNT_ID' \
+  'ACCOUNT_KEY' \
   'API_KEY' \
   'API_TOKEN' \
   'AWS_' \
