@@ -18,7 +18,7 @@
   gpgSign = true
 
 [column]
-	ui = never
+  ui = never
 
 [core]
   attributesFile = ~/.dotfiles/git/gitattributes
@@ -51,7 +51,7 @@
   smudge = git-lfs smudge -- %f
 
 [gpg]
-	format = ssh
+  format = ssh
 
 [init]
   templateDir = ~/.dotfiles/git/template/
@@ -134,7 +134,7 @@
   file-renamed-label = [R]
   file-style = 232 bold 184
   hunk-header-style = omit
-   inline-hint-style = syntax
+  inline-hint-style = syntax
   line-numbers = true
   line-numbers-left-format = " {nm:>3} │"
   line-numbers-left-style = black
@@ -161,5 +161,5 @@
   zero-style = dim syntax
 
 [rerere]
-	enabled = true
-	autoupdate = true
+  enabled = true
+  autoupdate = true

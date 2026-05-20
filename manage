@@ -381,6 +381,19 @@ TOOL_CONFIGS = {
             },
         },
     },
+    "doggo": {
+        "tag": "v1.1.5",
+        "commit": "c1e6f89eca428a69529223fffb088bdc31264310",
+        "repository": "mr-karan/doggo",
+        "assets": {
+            "linux_amd64": "doggo_{version}_Linux_x86_64.tar.gz",
+            "linux_arm64": "doggo_{version}_Linux_arm64.tar.gz",
+            "darwin_amd64": "doggo_{version}_Darwin_x86_64.tar.gz",
+            "darwin_arm64": "doggo_{version}_Darwin_arm64.tar.gz",
+        },
+        "binaries": ("doggo",),
+        "checksum": {"asset_name": "doggo_{version}_checksums.txt"},
+    },
     "k6": {
         "tag": "v2.0.0",
         "commit": "8c3be52cc17dee055c9e8757a66fb97d946dd248",
