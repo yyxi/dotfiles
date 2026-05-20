@@ -1,6 +1,7 @@
 [alias]
   amend = commit --amend
   current = "!svu --tag-mode all-branches current"
+  difft = difftool
   major = "!svu --tag-mode all-branches major"
   minor = "!svu --tag-mode all-branches minor"
   next = "!svu --tag-mode all-branches next"
@@ -31,7 +32,7 @@
   helper = cache --timeout=36000
 
 [diff]
-  external = difft --syntax-highlight=off
+  tool = difftastic
   algorithm = histogram
   colorMoved = default
   submodule = log
@@ -43,6 +44,12 @@
   ; pruneTags = true
   ; all = true
   fsckObjects = true
+
+[difftool]
+  prompt = false
+
+[difftool "difftastic"]
+  cmd = ~/.dotfiles/git/difftool "$MERGED" "$LOCAL" "$REMOTE"
 
 [filter "lfs"]
   clean = git-lfs clean -- %f
@@ -61,6 +68,9 @@
 
 [log]
   date = iso-local
+
+[pager]
+  difftool = true
 
 [merge]
   conflictStyle = zdiff3
@@ -121,7 +131,7 @@
 [delta "gruvmax"]
   blame-code-style = syntax
   blame-format = "{author:>18} ({commit:>8}) {timestamp:<13} "
-  blame-palette = "#000000" "#1d2021" "#282828" "#3c3836"
+  blame-palette = "#1d2021" "#1d2021" "#282828" "#3c3836"
   commit-decoration-style = none
   commit-style = "#ffffff" bold
   dark = true
@@ -142,7 +152,7 @@
   line-numbers-minus-style = "#B10036"
   line-numbers-plus-style = "#03a4ff"
   line-numbers-right-format = " {np:>3} │"
-  line-numbers-right-style = black
+  line-numbers-right-style = ""
   line-numbers-zero-style = "#84786A"
   line-numbers-zero-style = "#999999"
   merge-conflict-begin-symbol = ⌃
@@ -153,10 +163,10 @@
   merge-conflict-theirs-diff-header-style = "#FABD2F" bold overline
   minus-emph-style = syntax "#80002a"
   minus-non-emph-style = syntax auto
-  minus-style = syntax black
+  minus-style = syntax
   plus-emph-style = syntax "#003300"
   plus-non-emph-style = syntax auto
-  plus-style = syntax black
+  plus-style = syntax
   syntax-theme = gruvbox-dark
   whitespace-error-style = "#FB4934" reverse
   zero-style = dim syntax

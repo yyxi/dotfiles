@@ -1,0 +1,65 @@
+#!/usr/bin/env fish
+
+if test (count $argv) -ne 3
+    echo "usage: git/difftool MERGED LOCAL REMOTE" >&2
+    exit 2
+end
+
+set -l merged $argv[1]
+set -l local $argv[2]
+set -l remote $argv[3]
+
+function __difftool_rgb --argument-names hex
+    set hex (string replace -- '#' '' $hex)
+    printf '%s/%s/%s' (string sub --start 1 --length 2 $hex) (string sub --start 3 --length 2 $hex) (string sub --start 5 --length 2 $hex)
+end
+
+function __difftool_palette --argument-names index hex tty
+    set -l rgb (__difftool_rgb $hex)
+
+    if set -q TMUX; or string match --quiet 'tmux*' -- "$TERM"
+        # Tell tmux to pass the escape sequence through to the underlying terminal.
+        printf '\033Ptmux;\033\033]4;%d;rgb:%s\033\033\\\033\\' $index $rgb >$tty
+    else if string match --quiet 'screen*' -- "$TERM"
+        printf '\033P\033]4;%d;rgb:%s\007\033\\' $index $rgb >$tty
+    else if string match --quiet 'linux*' -- "$TERM"
+        test $index -lt 16; and printf '\e]P%x%s' $index (string replace --all / '' $rgb) >$tty
+    else
+        printf '\033]4;%d;rgb:%s\033\\' $index $rgb >$tty
+    end
+end
+
+function __difftool_set_palette
+    set -l tty
+    if test -t 2
+        set tty /dev/stderr
+    else if test -t 1
+        set tty /dev/stdout
+    else if set -q TTY; and test -w "$TTY"
+        set tty $TTY
+    else
+        set -l detected_tty (tty 2>/dev/null)
+        test $status -eq 0; and set tty $detected_tty
+    end
+
+    test -n "$tty"; and test -w "$tty"; or return
+
+    # Difftastic emits ANSI colors and does not expose a theme. Set only the
+    # ANSI slots it uses with --syntax-highlight=off for this wrapper invocation.
+    set -l error_color '#fabc2e'
+    set -l removal_color '#fb4833'
+    set -l addition_color '#d4d700'
+    set -l header_color '#ebdbb2'
+
+    __difftool_palette 1 $error_color $tty # errors
+    __difftool_palette 9 $removal_color $tty # removals on dark backgrounds
+    __difftool_palette 10 $addition_color $tty # additions on dark backgrounds
+    __difftool_palette 11 $header_color $tty # headers and warnings on dark backgrounds
+end
+
+__difftool_set_palette
+
+# git difftool does not provide the full argument list that diff.external gives
+# to difftastic. Pass placeholder blob IDs and regular-file modes so difftastic
+# uses its Git external-diff argument parser while comparing Git's temp files.
+exec difft --syntax-highlight=off "$merged" "$local" abcdef1 100644 "$remote" abcdef2 100644
