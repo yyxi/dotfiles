@@ -381,6 +381,19 @@ TOOL_CONFIGS = {
             },
         },
     },
+    "duckdb": {
+        "tag": "v1.5.2",
+        "commit": "8a5851971fae891f292c2714d86046ee018e9737",
+        "repository": "duckdb/duckdb",
+        "assets": {
+            "linux_amd64": "duckdb_cli-linux-amd64.zip",
+            "linux_arm64": "duckdb_cli-linux-arm64.zip",
+            "darwin_amd64": "duckdb_cli-osx-amd64.zip",
+            "darwin_arm64": "duckdb_cli-osx-arm64.zip",
+        },
+        "binaries": ("duckdb",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
     "doggo": {
         "tag": "v1.1.5",
         "commit": "c1e6f89eca428a69529223fffb088bdc31264310",
@@ -393,6 +406,36 @@ TOOL_CONFIGS = {
         },
         "binaries": ("doggo",),
         "checksum": {"asset_name": "doggo_{version}_checksums.txt"},
+    },
+    "just": {
+        "tag": "1.51.0",
+        "commit": "f92413bb045a058b35206d590c8f3ae147ea68aa",
+        "repository": "casey/just",
+        "assets": {
+            "linux_amd64": "just-{version}-x86_64-unknown-linux-musl.tar.gz",
+            "linux_arm64": "just-{version}-aarch64-unknown-linux-musl.tar.gz",
+            "darwin_amd64": "just-{version}-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "just-{version}-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("just",),
+        "checksum": {"asset_name": "SHA256SUMS"},
+    },
+    "tokei": {
+        "tag": "v12.1.2",
+        "commit": "7e0b30ff4c1fe78fe2cc615d1f0f52c7ce6cb761",
+        "repository": "xampprocky/tokei",
+        "assets": {
+            "linux_amd64": "tokei-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "tokei-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "tokei-x86_64-apple-darwin.tar.gz",
+        },
+        "binaries": ("tokei",),
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "k6": {
         "tag": "v2.0.0",
