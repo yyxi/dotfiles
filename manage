@@ -11,6 +11,7 @@ import json
 import os
 import platform as platform_module
 import re
+import shlex
 import shutil
 import signal
 import stat
@@ -538,7 +539,11 @@ TOOL_CONFIGS = {
         },
         "install_layout": "archive",
         "binaries": (
-            {"name": "lua-language-server", "source": "bin/lua-language-server"},
+            {
+                "name": "lua-language-server",
+                "source": "bin/lua-language-server",
+                "link_mode": "wrapper",
+            },
         ),
         "signature": {
             "commit": {
@@ -587,6 +592,7 @@ class BinarySpec:
     output_name: str
     source_name: Optional[str] = None
     sources: Mapping[str, str] = dataclasses.field(default_factory=dict)
+    link_mode: str = "symlink"
 
     def source_path(self, platform: Platform) -> str:
         return self.sources.get(platform.key) or self.source_name or self.output_name
@@ -759,6 +765,7 @@ def binary_specs(values: Sequence[Any]) -> Tuple[BinarySpec, ...]:
                     output_name=str(name),
                     source_name=optional_string(value.get("source")),
                     sources=string_mapping(value.get("sources")),
+                    link_mode=optional_string(value.get("link_mode")) or "symlink",
                 )
             )
         else:
@@ -1375,6 +1382,10 @@ def link_points_inside_repository(link: Path, repository: Path) -> bool:
     return target == repo or repo in target.parents
 
 
+def binary_wrapper_script(target: Path) -> str:
+    return "#!/bin/sh\nexec {0} \"$@\"\n".format(shlex.quote(str(target)))
+
+
 def ensure_bin_link(paths: InstallPaths, binary_name: str, target: Path) -> None:
     paths.bin.mkdir(parents=True, exist_ok=True)
     link = paths.bin / binary_name
@@ -1396,10 +1407,47 @@ def ensure_bin_link(paths: InstallPaths, binary_name: str, target: Path) -> None
         raise fatal("unable to link {0} to {1}: {2}".format(link, target, exc))
 
 
+def ensure_bin_wrapper(paths: InstallPaths, binary_name: str, target: Path) -> None:
+    if os.name == "nt":
+        raise fatal("wrapper launch mode is not supported on Windows: {0}".format(binary_name))
+    paths.bin.mkdir(parents=True, exist_ok=True)
+    wrapper = paths.bin / binary_name
+    script = binary_wrapper_script(target)
+    if wrapper.is_symlink():
+        if link_points_inside_repository(wrapper, paths.repository):
+            wrapper.unlink()
+        else:
+            raise fatal(
+                "refusing to replace symlink outside this repository: {0}".format(wrapper)
+            )
+    elif wrapper.exists():
+        if not wrapper.is_file():
+            raise fatal("refusing to overwrite non-file: {0}".format(wrapper))
+        current = wrapper.read_text(encoding="utf-8")
+        if current == script:
+            set_executable(wrapper)
+            return
+        if not link_points_inside_repository(wrapper, paths.repository):
+            raise fatal(
+                "refusing to overwrite file outside this repository: {0}".format(wrapper)
+            )
+    wrapper.write_text(script, encoding="utf-8")
+    set_executable(wrapper)
+
+
 def ensure_tool_links(paths: InstallPaths, tool: Tool, platform: Platform) -> None:
     for binary in tool.binaries:
         target = expected_binary_path(paths, tool, platform, binary)
-        ensure_bin_link(paths, binary.output_name, target)
+        if binary.link_mode == "symlink":
+            ensure_bin_link(paths, binary.output_name, target)
+        elif binary.link_mode == "wrapper":
+            ensure_bin_wrapper(paths, binary.output_name, target)
+        else:
+            raise fatal(
+                "unsupported link mode for {0}: {1}".format(
+                    binary.output_name, binary.link_mode
+                )
+            )
 
 
 def installed_payload_ok(paths: InstallPaths, tool: Tool, platform: Platform) -> bool:
