@@ -48,6 +48,7 @@
   "model": "opus",
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
+  "theme": "dark",
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
   }
