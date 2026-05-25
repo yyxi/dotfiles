@@ -1383,7 +1383,7 @@ def link_points_inside_repository(link: Path, repository: Path) -> bool:
 
 
 def binary_wrapper_script(target: Path) -> str:
-    return "#!/bin/sh\nexec {0} \"$@\"\n".format(shlex.quote(str(target)))
+    return '#!/bin/sh\nexec {0} "$@"\n'.format(shlex.quote(str(target)))
 
 
 def ensure_bin_link(paths: InstallPaths, binary_name: str, target: Path) -> None:
@@ -1409,7 +1409,9 @@ def ensure_bin_link(paths: InstallPaths, binary_name: str, target: Path) -> None
 
 def ensure_bin_wrapper(paths: InstallPaths, binary_name: str, target: Path) -> None:
     if os.name == "nt":
-        raise fatal("wrapper launch mode is not supported on Windows: {0}".format(binary_name))
+        raise fatal(
+            "wrapper launch mode is not supported on Windows: {0}".format(binary_name)
+        )
     paths.bin.mkdir(parents=True, exist_ok=True)
     wrapper = paths.bin / binary_name
     script = binary_wrapper_script(target)
@@ -1418,7 +1420,9 @@ def ensure_bin_wrapper(paths: InstallPaths, binary_name: str, target: Path) -> N
             wrapper.unlink()
         else:
             raise fatal(
-                "refusing to replace symlink outside this repository: {0}".format(wrapper)
+                "refusing to replace symlink outside this repository: {0}".format(
+                    wrapper
+                )
             )
     elif wrapper.exists():
         if not wrapper.is_file():
@@ -1429,7 +1433,9 @@ def ensure_bin_wrapper(paths: InstallPaths, binary_name: str, target: Path) -> N
             return
         if not link_points_inside_repository(wrapper, paths.repository):
             raise fatal(
-                "refusing to overwrite file outside this repository: {0}".format(wrapper)
+                "refusing to overwrite file outside this repository: {0}".format(
+                    wrapper
+                )
             )
     wrapper.write_text(script, encoding="utf-8")
     set_executable(wrapper)
