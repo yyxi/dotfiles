@@ -284,6 +284,24 @@ TOOL_CONFIGS = {
         },
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
+    "bumblebee": {
+        "tag": "v0.1.1",
+        "commit": "c24089804ee66ece4bec6f14638cb98985389cdb",
+        "repository": "perplexityai/bumblebee",
+        "assets": {
+            "linux_amd64": "bumblebee_{version}_linux_amd64.tar.gz",
+            "linux_arm64": "bumblebee_{version}_linux_arm64.tar.gz",
+            "darwin_amd64": "bumblebee_{version}_darwin_amd64.tar.gz",
+            "darwin_arm64": "bumblebee_{version}_darwin_arm64.tar.gz",
+        },
+        "binaries": ("bumblebee",),
+        "checksum": {"asset_name": "checksums.txt"},
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+    },
     "cosign": {
         "tag": "v3.0.6",
         "commit": "f1ad3ee952313be5d74a49d67ba0aa8d0d5e351f",
