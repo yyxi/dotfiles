@@ -43,7 +43,7 @@ end
 
 if test -d $HOME/.local/share/pnpm
   set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-  fish_add_path $PNPM_HOME
+  fish_add_path "$PNPM_HOME/bin"
 end
 
 function fish_user_key_bindings

@@ -239,6 +239,19 @@ TOOL_CONFIGS = {
         },
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
+    "zizmor": {
+        "tag": "v1.25.2",
+        "commit": "b50d8f60e27e0084aa3a5f5dff46054a8253ac2a",
+        "repository": "zizmorcore/zizmor",
+        "assets": {
+            "linux_amd64": "zizmor-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "zizmor-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "zizmor-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "zizmor-aarch64-apple-darwin.tar.gz",
+        },
+        "binaries": ("zizmor",),
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
     "walk": {
         "default": True,
         "tag": "v1.13.0",
