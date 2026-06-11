@@ -297,6 +297,24 @@ TOOL_CONFIGS = {
         },
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
+    "actionlint": {
+        "tag": "v1.7.12",
+        "commit": "914e7df21a07ef503a81201c76d2b11c789d3fca",
+        "repository": "rhysd/actionlint",
+        "assets": {
+            "linux_amd64": "actionlint_{version}_linux_amd64.tar.gz",
+            "linux_arm64": "actionlint_{version}_linux_arm64.tar.gz",
+            "darwin_amd64": "actionlint_{version}_darwin_amd64.tar.gz",
+            "darwin_arm64": "actionlint_{version}_darwin_arm64.tar.gz",
+        },
+        "binaries": ("actionlint",),
+        "checksum": {"asset_name": "actionlint_{version}_checksums.txt"},
+        "signature": {
+            "commit": {
+                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
+            },
+        },
+    },
     "bumblebee": {
         "tag": "v0.1.1",
         "commit": "c24089804ee66ece4bec6f14638cb98985389cdb",
@@ -484,8 +502,8 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "k6-v{version}-checksums.txt"},
     },
     "harper": {
-        "tag": "v2.1.0",
-        "commit": "cc965dba54dfb2ed272f9c271bc108cddee98e64",
+        "tag": "v2.4.0",
+        "commit": "67e8fe55221ab22ee08db18a3463d427d00e1cba",
         "repository": "Automattic/harper",
         "assets": {
             "linux_amd64": "harper-cli-x86_64-unknown-linux-musl.tar.gz",
@@ -503,8 +521,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "harper-ls": {
-        "tag": "v2.1.0",
-        "commit": "cc965dba54dfb2ed272f9c271bc108cddee98e64",
+        "tag": "v2.4.0",
+        "commit": "67e8fe55221ab22ee08db18a3463d427d00e1cba",
         "repository": "Automattic/harper",
         "assets": {
             "linux_amd64": "harper-ls-x86_64-unknown-linux-musl.tar.gz",

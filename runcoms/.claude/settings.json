@@ -42,12 +42,11 @@
       "Read(*.tfvars)",
       "Read(.npmrc)"
     ],
-    "defaultMode": "plan",
-    "disableBypassPermissionsMode": "disable"
+    "defaultMode": "plan"
   },
-  "model": "opus",
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
