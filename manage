@@ -1602,7 +1602,9 @@ def selinux_is_enabled() -> bool:
         except OSError:
             pass
         else:
-            return result.returncode == 0 and result.stdout.strip().lower() != "disabled"
+            return (
+                result.returncode == 0 and result.stdout.strip().lower() != "disabled"
+            )
 
     return True
 
@@ -1655,9 +1657,7 @@ def selinux_policy_directory(paths: InstallPaths, tool: Tool) -> Path:
     directory = paths.repository / "selinux" / tool.selinux_policy
     if not directory.is_dir():
         raise fatal(
-            "missing SELinux policy directory for {0}: {1}".format(
-                tool.name, directory
-            )
+            "missing SELinux policy directory for {0}: {1}".format(tool.name, directory)
         )
     return directory
 
