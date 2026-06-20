@@ -29,6 +29,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -103,8 +104,8 @@ TOOL_CONFIGS = {
         "aliases": ("github-cli",),
     },
     "nvim": {
-        "tag": "v0.12.2",
-        "commit": "4b35336f6f850ce68a230716401cdaa21bdb6a25",
+        "tag": "v0.12.3",
+        "commit": "35b57441b0bac035dcfc591830e82abc560720b1",
         "repository": "neovim/neovim",
         "assets": {
             "linux_amd64": "nvim-linux-x86_64.tar.gz",
@@ -116,7 +117,7 @@ TOOL_CONFIGS = {
         "strip_components": 1,
         "binaries": ({"name": "nvim", "source": "bin/nvim"},),
         "selinux_policy": "nvim-local",
-        "tag_object": "2b6d81f1aef77614f49c206de5ec790ae50addfc",
+        "tag_object": "467d1c7c262130a0416fff0ca4b00281169d1f1d",
         "signature": {
             "tag": "required",
             "commit": {
@@ -1329,26 +1330,22 @@ def sanitized_environment() -> Dict[str, str]:
     return env
 
 
-def terminate_process_group(process: Any) -> None:
-    with contextlib.suppress(ProcessLookupError, OSError):
-        os.killpg(process.pid, signal.SIGTERM)
+CleanupScope = Literal["group", "process"]
+
+
+def terminate_process_tree(process: Any, scope: CleanupScope) -> None:
+    def send(sig: int) -> None:
+        with contextlib.suppress(ProcessLookupError, OSError):
+            if scope == "group":
+                os.killpg(process.pid, sig)
+            else:
+                process.send_signal(sig)
+
+    send(signal.SIGTERM)
     with contextlib.suppress(subprocess.TimeoutExpired):
         process.wait(timeout=5)
         return
-    with contextlib.suppress(ProcessLookupError, OSError):
-        os.killpg(process.pid, signal.SIGKILL)
-    with contextlib.suppress(OSError):
-        process.wait(timeout=5)
-
-
-def terminate_process(process: Any) -> None:
-    with contextlib.suppress(OSError):
-        process.terminate()
-    with contextlib.suppress(subprocess.TimeoutExpired):
-        process.wait(timeout=5)
-        return
-    with contextlib.suppress(OSError):
-        process.kill()
+    send(signal.SIGKILL)
     with contextlib.suppress(OSError):
         process.wait(timeout=5)
 
@@ -1401,8 +1398,14 @@ def run_command(
     stdout: Optional[Any] = None,
     stderr: Optional[Any] = None,
     env: Optional[Mapping[str, str]] = None,
-    start_new_session: bool = True,
+    interactive: bool = False,
 ) -> None:
+    # interactive=False: detach into a new session so SIGINT to the terminal
+    # reaches only the parent; cleanup can safely killpg the whole tree.
+    # interactive=True: stay in the parent's session and process group so the
+    # child remains foreground on the controlling TTY (required for prompts);
+    # cleanup is process-scoped to avoid signalling the parent.
+    cleanup_scope: CleanupScope = "process" if interactive else "group"
     process: Any = None
     try:
         process = subprocess.Popen(
@@ -1411,17 +1414,14 @@ def run_command(
             env=dict(env) if env is not None else sanitized_environment(),
             stdout=stdout,
             stderr=stderr,
-            start_new_session=start_new_session,
+            start_new_session=not interactive,
         )
         return_code = process.wait()
     except OSError as exc:
         raise fatal("unable to run {0}: {1}".format(command[0], exc))
     except BaseException:
         if process is not None and process.poll() is None:
-            if start_new_session:
-                terminate_process_group(process)
-            else:
-                terminate_process(process)
+            terminate_process_tree(process, scope=cleanup_scope)
         raise
     if return_code != 0:
         raise fatal(
@@ -1436,24 +1436,7 @@ def command_output(
     cwd: Optional[Path] = None,
     env: Optional[Mapping[str, str]] = None,
 ) -> str:
-    try:
-        return subprocess.check_output(
-            list(command),
-            cwd=str(cwd) if cwd else None,
-            env=dict(env) if env is not None else sanitized_environment(),
-            stderr=subprocess.PIPE,
-            text=True,
-        ).strip()
-    except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.strip() if isinstance(exc.stderr, str) else ""
-        detail = ": {0}".format(stderr) if stderr else ""
-        raise fatal(
-            "command failed with exit code {0}: {1}{2}".format(
-                exc.returncode, " ".join(command), detail
-            )
-        )
-    except OSError as exc:
-        raise fatal("unable to run {0}: {1}".format(command[0], exc))
+    return command_result_or_raise(command, cwd=cwd, env=env).stdout.strip()
 
 
 def check_external_tools(tools: Iterable[str]) -> None:
@@ -2658,7 +2641,7 @@ def run_restic(
         [str(binary), *restic_args],
         cwd=cwd,
         env=restic_environment(),
-        start_new_session=False,
+        interactive=True,
     )
 
 
