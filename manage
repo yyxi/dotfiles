@@ -44,6 +44,19 @@ MAX_AUTOMATIC_RATE_LIMIT_SLEEP_SECONDS = 300
 RATE_LIMIT_LOW_WARNED = False
 RESTIC_EXCLUDE_FILE = Path("restic") / "exclude.txt"
 RESTIC_DEFAULT_B2_CONNECTIONS = 100
+SELINUX_REQUIRED_BINARIES = ("make", "sudo", "semodule", "semanage", "restorecon")
+EL10_FAMILY_IDS = frozenset(
+    {
+        "almalinux",
+        "centos",
+        "eurolinux",
+        "ol",
+        "oracle",
+        "rhel",
+        "rocky",
+        "scientific",
+    }
+)
 
 # Tool asset names are explicit for the only supported platforms:
 # linux_amd64, linux_arm64, darwin_amd64, and darwin_arm64.
@@ -102,6 +115,7 @@ TOOL_CONFIGS = {
         "install_layout": "archive",
         "strip_components": 1,
         "binaries": ({"name": "nvim", "source": "bin/nvim"},),
+        "selinux_policy": "nvim-local",
         "tag_object": "2b6d81f1aef77614f49c206de5ec790ae50addfc",
         "signature": {
             "tag": "required",
@@ -143,6 +157,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "fzf-{version}-darwin_arm64.tar.gz",
         },
         "binaries": ("fzf",),
+        "selinux_policy": "tools-local",
         "checksum": {"asset_name": "fzf_{version}_checksums.txt"},
     },
     "svu": {
@@ -165,6 +180,7 @@ TOOL_CONFIGS = {
             "verify_sigstore": True,
         },
         "dependencies": ("cosign",),
+        "selinux_policy": "tools-local",
     },
     "fd": {
         "default": True,
@@ -178,6 +194,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "fd-v{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("fd",),
+        "selinux_policy": "tools-local",
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "delta": {
@@ -193,6 +210,7 @@ TOOL_CONFIGS = {
         },
         "binaries": ("delta",),
         "aliases": ("git-delta",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -213,6 +231,7 @@ TOOL_CONFIGS = {
         },
         "binaries": ("difft",),
         "aliases": ("difftastic",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -232,6 +251,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "zoxide-{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("zoxide",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -250,6 +270,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "zizmor-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("zizmor",),
+        "selinux_policy": "tools-local",
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "walk": {
@@ -264,6 +285,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "walk_darwin_arm64",
         },
         "binaries": ("walk",),
+        "selinux_policy": "tools-local",
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "fx": {
@@ -277,6 +299,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "fx_darwin_arm64",
         },
         "binaries": ("fx",),
+        "selinux_policy": "tools-local",
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "age": {
@@ -309,6 +332,7 @@ TOOL_CONFIGS = {
         },
         "binaries": ("actionlint",),
         "checksum": {"asset_name": "actionlint_{version}_checksums.txt"},
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -425,6 +449,7 @@ TOOL_CONFIGS = {
         ),
         "checksum": {"asset_name": "sha256sums.txt"},
         "tag_object": "c6dbf0e669dd68598522f52b4f623e73823c15ea",
+        "selinux_policy": "tools-local",
         "signature": {
             "tag": "required",
             "commit": {
@@ -481,6 +506,7 @@ TOOL_CONFIGS = {
             "darwin_amd64": "tokei-x86_64-apple-darwin.tar.gz",
         },
         "binaries": ("tokei",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -513,6 +539,7 @@ TOOL_CONFIGS = {
         },
         "binaries": ({"name": "harper", "source": "harper-cli"},),
         "aliases": ("harper-cli",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -531,6 +558,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "harper-ls-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("harper-ls",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -550,6 +578,7 @@ TOOL_CONFIGS = {
         },
         "binaries": ("tree-sitter",),
         "aliases": ("tree-sitter-cli",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -569,6 +598,7 @@ TOOL_CONFIGS = {
         },
         "strip_components": 1,
         "binaries": ("shellcheck",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -587,6 +617,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "lua-language-server-{version}-darwin-arm64.tar.gz",
         },
         "install_layout": "archive",
+        "selinux_policy": "tools-local",
         "binaries": (
             {
                 "name": "lua-language-server",
@@ -612,6 +643,7 @@ TOOL_CONFIGS = {
             "darwin_arm64": "stylua-macos-aarch64.zip",
         },
         "binaries": ("stylua",),
+        "selinux_policy": "tools-local",
         "signature": {
             "commit": {
                 "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
@@ -685,6 +717,7 @@ class Tool:
     commit_signature: str = "required"
     commit_signature_exception: Optional[str] = None
     missing_checksum_exception: Optional[str] = None
+    selinux_policy: Optional[str] = None
     default: bool = False
 
     def asset_name(self, platform: Platform) -> str:
@@ -914,6 +947,7 @@ def tool_from_config(name: str, config: Mapping[str, Any]) -> Tool:
         missing_checksum_exception=optional_string(
             config.get("missing_checksum_exception")
         ),
+        selinux_policy=optional_string(config.get("selinux_policy")),
         default=bool(config.get("default", False)),
     )
 
@@ -1295,7 +1329,7 @@ def sanitized_environment() -> Dict[str, str]:
     return env
 
 
-def terminate_process(process: Any) -> None:
+def terminate_process_group(process: Any) -> None:
     with contextlib.suppress(ProcessLookupError, OSError):
         os.killpg(process.pid, signal.SIGTERM)
     with contextlib.suppress(subprocess.TimeoutExpired):
@@ -1307,12 +1341,67 @@ def terminate_process(process: Any) -> None:
         process.wait(timeout=5)
 
 
+def terminate_process(process: Any) -> None:
+    with contextlib.suppress(OSError):
+        process.terminate()
+    with contextlib.suppress(subprocess.TimeoutExpired):
+        process.wait(timeout=5)
+        return
+    with contextlib.suppress(OSError):
+        process.kill()
+    with contextlib.suppress(OSError):
+        process.wait(timeout=5)
+
+
+def run_command_result(
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+    env: Optional[Mapping[str, str]] = None,
+) -> Any:
+    try:
+        return subprocess.run(
+            list(command),
+            cwd=str(cwd) if cwd else None,
+            env=dict(env) if env is not None else sanitized_environment(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise fatal("unable to run {0}: {1}".format(command[0], exc))
+
+
+def command_result_or_raise(
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+    env: Optional[Mapping[str, str]] = None,
+) -> Any:
+    result = run_command_result(command, cwd=cwd, env=env)
+    if result.returncode == 0:
+        return result
+    stdout = result.stdout.strip() if isinstance(result.stdout, str) else ""
+    stderr = result.stderr.strip() if isinstance(result.stderr, str) else ""
+    parts = []
+    if stderr:
+        parts.append("stderr: {0}".format(stderr))
+    if stdout:
+        parts.append("stdout: {0}".format(stdout))
+    detail = ": {0}".format("; ".join(parts)) if parts else ""
+    raise fatal(
+        "command failed with exit code {0}: {1}{2}".format(
+            result.returncode, " ".join(command), detail
+        )
+    )
+
+
 def run_command(
     command: Sequence[str],
     cwd: Optional[Path] = None,
     stdout: Optional[Any] = None,
     stderr: Optional[Any] = None,
     env: Optional[Mapping[str, str]] = None,
+    start_new_session: bool = True,
 ) -> None:
     process: Any = None
     try:
@@ -1322,14 +1411,17 @@ def run_command(
             env=dict(env) if env is not None else sanitized_environment(),
             stdout=stdout,
             stderr=stderr,
-            start_new_session=True,
+            start_new_session=start_new_session,
         )
         return_code = process.wait()
     except OSError as exc:
         raise fatal("unable to run {0}: {1}".format(command[0], exc))
     except BaseException:
         if process is not None and process.poll() is None:
-            terminate_process(process)
+            if start_new_session:
+                terminate_process_group(process)
+            else:
+                terminate_process(process)
         raise
     if return_code != 0:
         raise fatal(
@@ -1420,6 +1512,198 @@ def expected_binary_path(
     return tool_directory(paths, tool) / binary.output_name
 
 
+def command_path(name: str) -> Optional[str]:
+    found = shutil.which(name)
+    if found is not None:
+        return found
+    for directory in ("/usr/sbin", "/usr/bin", "/sbin", "/bin"):
+        candidate = Path(directory) / name
+        if candidate.is_file() and os.access(str(candidate), os.X_OK):
+            return str(candidate)
+    return None
+
+
+def resolved_command_paths(names: Iterable[str]) -> Dict[str, str]:
+    found: Dict[str, str] = {}
+    for name in names:
+        path = command_path(name)
+        if path is not None:
+            found[name] = path
+    return found
+
+
+def os_release_data() -> Dict[str, str]:
+    lines: Optional[List[str]] = None
+    for path in (Path("/etc/os-release"), Path("/usr/lib/os-release")):
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeError):
+            continue
+        break
+    if lines is None:
+        return {}
+
+    data: Dict[str, str] = {}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in raw_line:
+            continue
+        key, raw_value = raw_line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        value = raw_value.strip()
+        if value[:1] in ("'", '"'):
+            try:
+                parts = shlex.split(value, posix=True)
+            except ValueError:
+                value = value.strip("'\"")
+            else:
+                value = " ".join(parts)
+        data[key] = value
+    return data
+
+
+def os_release_tokens(values: Iterable[str]) -> Set[str]:
+    tokens: Set[str] = set()
+    for value in values:
+        for token in re.split(r"[\s,]+", value.lower().strip()):
+            if token:
+                tokens.add(token)
+    return tokens
+
+
+def is_el10() -> bool:
+    data = os_release_data()
+    platform_id = data.get("PLATFORM_ID", "").strip().lower()
+    if "el10" in platform_id:
+        return True
+    version_id = data.get("VERSION_ID", "").strip()
+    if not version_id.startswith("10"):
+        return False
+    tokens = os_release_tokens(
+        data.get(key, "") for key in ("ID", "ID_LIKE", "REDHAT_SUPPORT_PRODUCT")
+    )
+    return bool(tokens & EL10_FAMILY_IDS)
+
+
+def selinux_is_enabled() -> bool:
+    selinux_fs = Path("/sys/fs/selinux")
+    if not selinux_fs.exists():
+        return False
+
+    selinuxenabled = command_path("selinuxenabled")
+    if selinuxenabled is not None:
+        try:
+            result = subprocess.run(
+                [selinuxenabled],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        except OSError:
+            pass
+        else:
+            return result.returncode == 0
+
+    getenforce = command_path("getenforce")
+    if getenforce is not None:
+        try:
+            result = subprocess.run(
+                [getenforce],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                check=False,
+            )
+        except OSError:
+            pass
+        else:
+            return result.returncode == 0 and result.stdout.strip().lower() != "disabled"
+
+    return True
+
+
+def sudo_noninteractive_result(
+    sudo_path: str,
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+) -> Any:
+    return run_command_result(
+        [sudo_path, "-n", *command],
+        cwd=cwd,
+        env=sanitized_environment(),
+    )
+
+
+def sudo_noninteractive_or_raise(
+    sudo_path: str,
+    command: Sequence[str],
+    cwd: Optional[Path] = None,
+) -> Any:
+    return command_result_or_raise(
+        [sudo_path, "-n", *command],
+        cwd=cwd,
+        env=sanitized_environment(),
+    )
+
+
+def selinux_noninteractive_sudo_ready(
+    paths: InstallPaths, command_paths: Mapping[str, str]
+) -> bool:
+    probes = (
+        (command_paths["semodule"], "-l"),
+        (command_paths["semanage"], "fcontext", "-l"),
+        (command_paths["restorecon"], "-n", str(paths.repository)),
+    )
+    for probe in probes:
+        if sudo_noninteractive_result(command_paths["sudo"], probe).returncode != 0:
+            return False
+    return True
+
+
+def selinux_policy_module_name(policy: str) -> str:
+    return policy.replace("-", "_")
+
+
+def selinux_policy_directory(paths: InstallPaths, tool: Tool) -> Path:
+    if not tool.selinux_policy:
+        raise fatal("{0} does not define a SELinux policy".format(tool.name))
+    directory = paths.repository / "selinux" / tool.selinux_policy
+    if not directory.is_dir():
+        raise fatal(
+            "missing SELinux policy directory for {0}: {1}".format(
+                tool.name, directory
+            )
+        )
+    return directory
+
+
+def selinux_exec_type_name(policy: str) -> str:
+    return "{0}_exec_t".format(selinux_policy_module_name(policy))
+
+
+def selinux_entrypoint_paths(
+    paths: InstallPaths, tool: Tool, platform: Platform
+) -> Tuple[Path, ...]:
+    entrypoints: List[Path] = []
+    for binary in tool.binaries:
+        entrypoints.append(expected_binary_path(paths, tool, platform, binary))
+        if binary.link_mode == "wrapper":
+            entrypoints.append(paths.bin / binary.output_name)
+        elif binary.link_mode != "symlink":
+            raise fatal(
+                "unsupported link mode for {0}: {1}".format(
+                    binary.output_name, binary.link_mode
+                )
+            )
+    return tuple(dict.fromkeys(entrypoints))
+
+
+def selinux_fcontext_expression(path: Path) -> str:
+    return "^{0}$".format(re.escape(str(path)))
+
+
 def link_points_inside_repository(link: Path, repository: Path) -> bool:
     if not link.is_symlink():
         return False
@@ -1503,6 +1787,126 @@ def ensure_tool_links(paths: InstallPaths, tool: Tool, platform: Platform) -> No
                     binary.output_name, binary.link_mode
                 )
             )
+
+
+def ensure_selinux_policy_module_once(
+    paths: InstallPaths,
+    tool: Tool,
+    policy_status: Dict[str, bool],
+    make_path: str,
+    sudo_path: str,
+    semodule_path: str,
+) -> None:
+    if not tool.selinux_policy:
+        raise fatal("{0} does not define a SELinux policy".format(tool.name))
+    if policy_status.get(tool.selinux_policy):
+        return
+
+    directory = selinux_policy_directory(paths, tool)
+    module_name = selinux_policy_module_name(tool.selinux_policy)
+    package = directory / "{0}.pp".format(module_name)
+    command_result_or_raise(
+        [make_path, "-f", "/usr/share/selinux/devel/Makefile", package.name],
+        cwd=directory,
+    )
+    if not package.is_file():
+        raise fatal("SELinux build did not produce {0}".format(package))
+    sudo_noninteractive_or_raise(sudo_path, [semodule_path, "-i", str(package)])
+    policy_status[tool.selinux_policy] = True
+
+
+def apply_selinux_fcontext(
+    sudo_path: str, semanage_path: str, exec_type: str, path: Path
+) -> None:
+    expression = selinux_fcontext_expression(path)
+    add_command = [semanage_path, "fcontext", "-a", "-t", exec_type, expression]
+    add_result = sudo_noninteractive_result(sudo_path, add_command)
+    if add_result.returncode == 0:
+        return
+
+    modify_command = [semanage_path, "fcontext", "-m", "-t", exec_type, expression]
+    modify_result = sudo_noninteractive_result(sudo_path, modify_command)
+    if modify_result.returncode == 0:
+        return
+
+    add_stderr = add_result.stderr.strip()
+    modify_stderr = modify_result.stderr.strip()
+    raise fatal(
+        "unable to configure SELinux file context for {0}: {1}; {2}".format(
+            path,
+            add_stderr or " ".join(add_command),
+            modify_stderr or " ".join(modify_command),
+        )
+    )
+
+
+def skip_tool_selinux_policy(
+    tool: Tool, policy_status: Dict[str, bool], reason: str
+) -> None:
+    if not tool.selinux_policy:
+        raise fatal("{0} does not define a SELinux policy".format(tool.name))
+    warn("{0}: skipping SELinux setup because {1}".format(tool.name, reason))
+    policy_status[tool.selinux_policy] = False
+
+
+def apply_tool_selinux_policy(
+    paths: InstallPaths,
+    platform: Platform,
+    tool: Tool,
+    policy_status: Dict[str, bool],
+    disable_selinux: bool = False,
+) -> None:
+    if disable_selinux or not tool.selinux_policy or platform.os_name != "linux":
+        return
+    if tool.selinux_policy in policy_status and not policy_status[tool.selinux_policy]:
+        return
+    if not is_el10():
+        skip_tool_selinux_policy(
+            tool, policy_status, "host is not recognized as EL10-family"
+        )
+        return
+    if not selinux_is_enabled():
+        skip_tool_selinux_policy(tool, policy_status, "SELinux is not enabled")
+        return
+
+    command_paths = resolved_command_paths(SELINUX_REQUIRED_BINARIES)
+    missing = [name for name in SELINUX_REQUIRED_BINARIES if name not in command_paths]
+    if missing:
+        skip_tool_selinux_policy(
+            tool,
+            policy_status,
+            "required command(s) are missing: {0}".format(", ".join(missing)),
+        )
+        return
+
+    if not selinux_noninteractive_sudo_ready(paths, command_paths):
+        skip_tool_selinux_policy(
+            tool,
+            policy_status,
+            "required SELinux sudo commands are not available non-interactively",
+        )
+        return
+
+    ensure_selinux_policy_module_once(
+        paths,
+        tool,
+        policy_status,
+        command_paths["make"],
+        command_paths["sudo"],
+        command_paths["semodule"],
+    )
+    exec_type = selinux_exec_type_name(tool.selinux_policy)
+    for entrypoint in selinux_entrypoint_paths(paths, tool, platform):
+        apply_selinux_fcontext(
+            command_paths["sudo"],
+            command_paths["semanage"],
+            exec_type,
+            entrypoint,
+        )
+        sudo_noninteractive_or_raise(
+            command_paths["sudo"],
+            [command_paths["restorecon"], "-v", str(entrypoint)],
+        )
 
 
 def installed_payload_ok(paths: InstallPaths, tool: Tool, platform: Platform) -> bool:
@@ -1847,10 +2251,23 @@ def prepare_checksum(
 
 
 def install_tool(
-    paths: InstallPaths, platform: Platform, tool: Tool, offline: bool = False
+    paths: InstallPaths,
+    platform: Platform,
+    tool: Tool,
+    offline: bool = False,
+    disable_selinux: bool = False,
+    selinux_policy_status: Optional[Dict[str, bool]] = None,
 ) -> None:
+    policy_status = selinux_policy_status if selinux_policy_status is not None else {}
     if installed_state_ok(paths, tool, platform):
         info("{0} {1} already installed".format(tool.name, tool.version))
+        apply_tool_selinux_policy(
+            paths,
+            platform,
+            tool,
+            policy_status,
+            disable_selinux=disable_selinux,
+        )
         return
     if offline:
         warn(
@@ -1861,6 +2278,13 @@ def install_tool(
         return
 
     install_regular_tool(paths, platform, tool)
+    apply_tool_selinux_policy(
+        paths,
+        platform,
+        tool,
+        policy_status,
+        disable_selinux=disable_selinux,
+    )
 
 
 def install_regular_tool(paths: InstallPaths, platform: Platform, tool: Tool) -> None:
@@ -1958,6 +2382,8 @@ def install_tool_names(
     tools: Mapping[str, Tool],
     requested: Sequence[str],
     offline: bool = False,
+    disable_selinux: bool = False,
+    selinux_policy_status: Optional[Dict[str, bool]] = None,
 ) -> None:
     canonical = []
     for name in requested:
@@ -1973,8 +2399,16 @@ def install_tool_names(
     cleanup_stale_staging(paths, (tools[name] for name in ordered))
     if not offline:
         preflight_tools(paths, canonical, tools, platform)
+    policy_status = selinux_policy_status if selinux_policy_status is not None else {}
     for name in ordered:
-        install_tool(paths, platform, tools[name], offline=offline)
+        install_tool(
+            paths,
+            platform,
+            tools[name],
+            offline=offline,
+            disable_selinux=disable_selinux,
+            selinux_policy_status=policy_status,
+        )
 
 
 def runcom_files(source_dir: Path) -> List[Path]:
@@ -2137,8 +2571,18 @@ def install_default(
     platform: Platform,
     tools: Mapping[str, Tool],
     offline: bool = False,
+    disable_selinux: bool = False,
+    selinux_policy_status: Optional[Dict[str, bool]] = None,
 ) -> None:
-    install_tool_names(paths, platform, tools, list(DEFAULT_INSTALL), offline=offline)
+    install_tool_names(
+        paths,
+        platform,
+        tools,
+        list(DEFAULT_INSTALL),
+        offline=offline,
+        disable_selinux=disable_selinux,
+        selinux_policy_status=selinux_policy_status,
+    )
     if not paths.is_canonical():
         warn(
             "not running from {0}; skipping runcom, fish, and context-engineering home changes".format(
@@ -2210,7 +2654,12 @@ def run_restic(
     cwd: Optional[Path] = None,
 ) -> None:
     binary = ensure_restic_installed(paths, platform, tools)
-    run_command([str(binary), *restic_args], cwd=cwd, env=restic_environment())
+    run_command(
+        [str(binary), *restic_args],
+        cwd=cwd,
+        env=restic_environment(),
+        start_new_session=False,
+    )
 
 
 def restic_init(
@@ -2325,6 +2774,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip tool downloads and only relink already installed tools",
     )
+    install_parser.add_argument(
+        "--disable-selinux",
+        action="store_true",
+        help="skip SELinux policy compilation, installation, and relabeling",
+    )
     install_parser.add_argument("name", nargs="?", help="optional tool name to install")
     subparsers.add_parser("clean", help="clean runcom symlinks")
     subparsers.add_parser(
@@ -2378,6 +2832,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args = parser.parse_args(argv)
         if args.command == "install":
             platform = current_platform()
+            selinux_policy_status: Dict[str, bool] = {}
             if args.name == "context-engineering":
                 if args.offline:
                     warn("offline install; skipping context-engineering clone")
@@ -2385,10 +2840,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     install_context_engineering(paths, explicit=True)
             elif args.name:
                 install_tool_names(
-                    paths, platform, tools, [args.name], offline=args.offline
+                    paths,
+                    platform,
+                    tools,
+                    [args.name],
+                    offline=args.offline,
+                    disable_selinux=args.disable_selinux,
+                    selinux_policy_status=selinux_policy_status,
                 )
             else:
-                install_default(paths, platform, tools, offline=args.offline)
+                install_default(
+                    paths,
+                    platform,
+                    tools,
+                    offline=args.offline,
+                    disable_selinux=args.disable_selinux,
+                    selinux_policy_status=selinux_policy_status,
+                )
             return 0
         if args.command == "clean":
             clean(paths)

@@ -1,0 +1,79 @@
+policy_module(nvim_local, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+gen_require(`
+    type unconfined_t;
+    role unconfined_r;
+')
+
+attribute_role nvim_local_roles;
+roleattribute unconfined_r nvim_local_roles;
+
+type nvim_local_t;
+type nvim_local_exec_t;
+application_domain(nvim_local_t, nvim_local_exec_t)
+role nvim_local_roles types nvim_local_t;
+
+########################################
+#
+# Entry and process model
+#
+
+# Transition from the current unconfined user domain into nvim_local_t.
+domtrans_pattern(unconfined_t, nvim_local_exec_t, nvim_local_t)
+ps_process_pattern(unconfined_t, nvim_local_t)
+allow unconfined_t nvim_local_t:process { signull signal sigkill };
+
+# Keep children inside nvim_local_t unless another explicit transition is added.
+application_exec_all(nvim_local_t)
+domain_use_interactive_fds(nvim_local_t)
+userdom_use_inherited_user_terminals(nvim_local_t)
+allow nvim_local_t self:process { fork signal_perms execmem getsched setsched share getpgid setpgid getsession getattr };
+allow nvim_local_t self:capability { setuid setgid dac_override dac_read_search };
+allow nvim_local_t self:fifo_file manage_fifo_file_perms;
+allow nvim_local_t self:unix_stream_socket create_stream_socket_perms;
+allow nvim_local_t self:unix_dgram_socket create_socket_perms;
+# sudo and related local helpers probe kernel route/interface state through
+# netlink_route_socket. This is local kernel IPC, not TCP/UDP/ICMP network use.
+allow nvim_local_t self:netlink_route_socket r_netlink_socket_perms;
+
+########################################
+#
+# Local-only file and process access.
+#
+
+files_read_etc_files(nvim_local_t)
+miscfiles_read_localization(nvim_local_t)
+auth_read_passwd(nvim_local_t)
+auth_manage_pam_pid(nvim_local_t)
+kernel_read_system_state(nvim_local_t)
+fs_getattr_all_fs(nvim_local_t)
+files_unconfined(nvim_local_t)
+fs_unconfined(nvim_local_t)
+dev_unconfined(nvim_local_t)
+logging_send_audit_msgs(nvim_local_t)
+logging_send_syslog_msg(nvim_local_t)
+sudo_manage_db(nvim_local_t)
+dbus_system_bus_client(nvim_local_t)
+
+# Neovim and its tools live in the user's home and temp areas.
+userdom_manage_home_role(unconfined_r, nvim_local_t)
+userdom_manage_tmp_role(unconfined_r, nvim_local_t)
+userdom_exec_user_home_content_files(nvim_local_t)
+userdom_execute_user_tmp_files(nvim_local_t)
+userdom_map_user_home_files(nvim_local_t)
+
+# Keep expected blocked network probes out of the audit log.
+corenet_dontaudit_tcp_connect_http_port(nvim_local_t)
+dontaudit nvim_local_t self:udp_socket create_socket_perms;
+
+# Intentionally omitted:
+# - auth_use_nsswitch(nvim_local_t)
+# - userdom_basic_networking(nvim_local_t)
+# - corenet_* allow macros
+# - unconfined_domain*(nvim_local_t)
+# - files_unconfined/dev_unconfined/domain_unconfined/fs_unconfined

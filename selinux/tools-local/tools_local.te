@@ -1,0 +1,87 @@
+policy_module(tools_local, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+gen_require(`
+    type unconfined_t;
+    role unconfined_r;
+')
+
+attribute_role tools_local_roles;
+roleattribute unconfined_r tools_local_roles;
+
+type tools_local_t;
+type tools_local_exec_t;
+application_domain(tools_local_t, tools_local_exec_t)
+role tools_local_roles types tools_local_t;
+
+########################################
+#
+# Entry and process model
+#
+
+# Transition from the current unconfined user domain into tools_local_t.
+domtrans_pattern(unconfined_t, tools_local_exec_t, tools_local_t)
+ps_process_pattern(unconfined_t, tools_local_t)
+allow unconfined_t tools_local_t:process { signull signal sigkill };
+
+# Keep children inside tools_local_t unless another explicit transition is added.
+application_exec_all(tools_local_t)
+domain_use_interactive_fds(tools_local_t)
+userdom_use_inherited_user_terminals(tools_local_t)
+allow tools_local_t self:process {
+    fork
+    signal_perms
+    getsched
+    setsched
+    share
+    getpgid
+    setpgid
+    getsession
+    getattr
+    setrlimit
+};
+allow tools_local_t self:fifo_file manage_fifo_file_perms;
+allow tools_local_t self:unix_stream_socket create_stream_socket_perms;
+allow tools_local_t self:unix_dgram_socket create_socket_perms;
+
+########################################
+#
+# Local-only file and process access.
+#
+
+files_read_etc_files(tools_local_t)
+miscfiles_read_localization(tools_local_t)
+auth_read_passwd(tools_local_t)
+kernel_read_system_state(tools_local_t)
+fs_getattr_all_fs(tools_local_t)
+domain_dontaudit_search_all_domains_state(tools_local_t)
+
+# These tools need broad local filesystem visibility for practical CLI use,
+# but they do not get domain-unconfined or SELinux network permissions.
+files_unconfined(tools_local_t)
+fs_unconfined(tools_local_t)
+dev_unconfined(tools_local_t)
+
+# The managed tools live in the user's home and may execute helpers from home
+# or user temp paths while staying inside tools_local_t.
+userdom_manage_home_role(unconfined_r, tools_local_t)
+userdom_manage_tmp_role(unconfined_r, tools_local_t)
+userdom_exec_user_home_content_files(tools_local_t)
+userdom_execute_user_tmp_files(tools_local_t)
+userdom_map_user_home_files(tools_local_t)
+
+# Keep expected blocked network probes out of the audit log.
+corenet_dontaudit_tcp_connect_http_port(tools_local_t)
+dontaudit tools_local_t self:udp_socket create_socket_perms;
+
+# Intentionally omitted:
+# - auth_use_nsswitch(tools_local_t)
+# - userdom_basic_networking(tools_local_t)
+# - corenet_* allow macros
+# - sudo, setuid/setgid, or DAC-bypass capability allowances
+# - execmem and Neovim-specific runtime allowances
+# - unconfined_domain*(tools_local_t)

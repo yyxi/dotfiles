@@ -1,0 +1,6 @@
+# Intentionally empty.
+#
+# The SELinux module defines the nvim_local_exec_t type, but the actual
+# file-context mapping for the Neovim binary is installed as local host
+# configuration with `semanage fcontext`, because the binary path depends on
+# the current user's home directory and should not be encoded in policy.

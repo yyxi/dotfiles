@@ -1,0 +1,7 @@
+# Intentionally path-free.
+#
+# The SELinux module defines tools_local_exec_t, but the actual binary paths are
+# host-specific local configuration under $HOME/.dotfiles/vendor/...
+#
+# Install the file-context mapping with semanage fcontext, then relabel with
+# restorecon. See README.md.

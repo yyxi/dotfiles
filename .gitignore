@@ -9,3 +9,8 @@ vendor/*
 !bin/unarchive
 
 .firecrawl/
+
+# SELinux policy build artifacts
+selinux/**/tmp/
+selinux/**/*.pp
+selinux/**/*.if
