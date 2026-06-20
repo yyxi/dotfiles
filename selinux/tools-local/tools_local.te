@@ -43,6 +43,7 @@ allow tools_local_t self:process {
     getsession
     getattr
     setrlimit
+    execmem
 };
 allow tools_local_t self:fifo_file manage_fifo_file_perms;
 allow tools_local_t self:unix_stream_socket create_stream_socket_perms;
@@ -83,5 +84,10 @@ dontaudit tools_local_t self:udp_socket create_socket_perms;
 # - userdom_basic_networking(tools_local_t)
 # - corenet_* allow macros
 # - sudo, setuid/setgid, or DAC-bypass capability allowances
-# - execmem and Neovim-specific runtime allowances
+# - Neovim-specific runtime allowances
 # - unconfined_domain*(tools_local_t)
+#
+# execmem is allowed because tree-sitter shells out to node, and V8's
+# irregexp JIT calls mprotect(PROT_EXEC) on freshly allocated pages
+# during `tree-sitter generate`. Without this, V8 aborts in
+# OS::SetPermissions and any grammar with "generate": true fails to build.

@@ -14,3 +14,4 @@ vendor/*
 selinux/**/tmp/
 selinux/**/*.pp
 selinux/**/*.if
+selinux/**/*.cil
