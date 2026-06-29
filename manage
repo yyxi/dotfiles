@@ -393,7 +393,7 @@ TOOL_CONFIGS = {
         "dependencies": ("cosign",),
     },
     "sfw": {
-        "tag": "v1.10.0",
+        "tag": "v1.12.0",
         "commit": "164c32dcbe3bbebcc0b091fd6a31ff93883545b2",
         "repository": "SocketDev/sfw-free",
         "assets": {
