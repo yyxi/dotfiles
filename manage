@@ -567,6 +567,20 @@ TOOL_CONFIGS = {
         },
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
+    "ast-grep": {
+        "tag": "0.44.1",
+        "commit": "26f784516b4a9a07f6969b1d5c3020ce42dbf7ed",
+        "repository": "ast-grep/ast-grep",
+        "assets": {
+            "linux_amd64": "app-x86_64-unknown-linux-gnu.zip",
+            "linux_arm64": "app-aarch64-unknown-linux-gnu.zip",
+            "darwin_amd64": "app-x86_64-apple-darwin.zip",
+            "darwin_arm64": "app-aarch64-apple-darwin.zip",
+        },
+        "binaries": ("ast-grep", "sg"),
+        "selinux_policy": "tools-local",
+        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+    },
     "tree-sitter": {
         "tag": "v0.26.9",
         "commit": "7f534862c3ec939c3a6ee147f7600ef5c1bf900f",
