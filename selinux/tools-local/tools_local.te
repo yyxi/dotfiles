@@ -58,6 +58,7 @@ files_read_etc_files(tools_local_t)
 miscfiles_read_localization(tools_local_t)
 auth_read_passwd(tools_local_t)
 kernel_read_system_state(tools_local_t)
+kernel_read_vm_sysctls(tools_local_t)
 fs_getattr_all_fs(tools_local_t)
 domain_dontaudit_search_all_domains_state(tools_local_t)
 

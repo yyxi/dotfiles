@@ -25,7 +25,7 @@
   attributesFile = ~/.dotfiles/git/gitattributes
   excludesFile = ~/.dotfiles/git/gitignore
   ignoreCase = false
-  pager = delta
+  pager = env HUNK_MCP_DISABLE=1 hunk pager
   whitespace = -trailing-space
 
 [credential]
@@ -62,9 +62,6 @@
 
 [init]
   templateDir = ~/.dotfiles/git/template/
-
-[interactive]
-  diffFilter = delta --color-only
 
 [log]
   date = iso-local
@@ -120,56 +117,6 @@
 
 [gpg "ssh"]
   defaultKeyCommand = ssh-add -L
-
-[delta]
-  features = side-by-side gruvmax
-  inspect-raw-lines = false
-  true-color = always
-  whitespace-error-style = 22 reverse
-  navigate = true
-
-[delta "gruvmax"]
-  blame-code-style = syntax
-  blame-format = "{author:>18} ({commit:>8}) {timestamp:<13} "
-  blame-palette = "#1d2021" "#1d2021" "#282828" "#3c3836"
-  commit-decoration-style = none
-  commit-style = "#ffffff" bold
-  dark = true
-  file-added-label = [+]
-  file-copied-label = [C]
-  file-decoration-style = "#434C5E" ul
-  ; file-decoration-style = "#84786A" ul
-  file-decoration-style = none
-  file-modified-label = [M]
-  file-removed-label = [-]
-  file-renamed-label = [R]
-  file-style = 232 bold 184
-  hunk-header-style = omit
-  inline-hint-style = syntax
-  line-numbers = true
-  line-numbers-left-format = " {nm:>3} │"
-  line-numbers-left-style = black
-  line-numbers-minus-style = "#B10036"
-  line-numbers-plus-style = "#03a4ff"
-  line-numbers-right-format = " {np:>3} │"
-  line-numbers-right-style = ""
-  line-numbers-zero-style = "#84786A"
-  line-numbers-zero-style = "#999999"
-  merge-conflict-begin-symbol = ⌃
-  merge-conflict-end-symbol = ⌄
-  merge-conflict-ours-diff-header-decoration-style = ''
-  merge-conflict-ours-diff-header-style = "#FABD2F" bold
-  merge-conflict-theirs-diff-header-decoration-style = ''
-  merge-conflict-theirs-diff-header-style = "#FABD2F" bold overline
-  minus-emph-style = syntax "#80002a"
-  minus-non-emph-style = syntax auto
-  minus-style = syntax
-  plus-emph-style = syntax "#003300"
-  plus-non-emph-style = syntax auto
-  plus-style = syntax
-  syntax-theme = gruvbox-dark
-  whitespace-error-style = "#FB4934" reverse
-  zero-style = dim syntax
 
 [rerere]
   enabled = true

@@ -198,25 +198,19 @@ TOOL_CONFIGS = {
         "selinux_policy": "tools-local",
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
-    "delta": {
+    "hunk": {
         "default": True,
-        "tag": "0.18.2",
-        "commit": "a589ff9debaefdd3992384434120f5a03a103481",
-        "repository": "dandavison/delta",
+        "tag": "v0.17.1",
+        "commit": "1ebe4a944b7c81217452e4adbc6a0fde70509acc",
+        "repository": "modem-dev/hunk",
         "assets": {
-            "linux_amd64": "delta-{version}-x86_64-unknown-linux-gnu.tar.gz",
-            "linux_arm64": "delta-{version}-aarch64-unknown-linux-gnu.tar.gz",
-            "darwin_amd64": "delta-{version}-x86_64-apple-darwin.tar.gz",
-            "darwin_arm64": "delta-{version}-aarch64-apple-darwin.tar.gz",
+            "linux_amd64": "hunkdiff-linux-x64.tar.gz",
+            "linux_arm64": "hunkdiff-linux-arm64.tar.gz",
+            "darwin_amd64": "hunkdiff-darwin-x64.tar.gz",
+            "darwin_arm64": "hunkdiff-darwin-arm64.tar.gz",
         },
-        "binaries": ("delta",),
-        "aliases": ("git-delta",),
+        "binaries": ("hunk",),
         "selinux_policy": "tools-local",
-        "signature": {
-            "commit": {
-                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
-            },
-        },
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "difft": {

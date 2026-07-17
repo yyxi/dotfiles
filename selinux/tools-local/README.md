@@ -5,7 +5,7 @@ Purpose: run selected `manage` CLI tools and their children in a local domain wi
 Covered tools:
 - `fzf`
 - `fd`
-- `delta`
+- `hunk` (with its session daemon disabled)
 - `difft`
 - `zoxide`
 - `walk`
@@ -52,8 +52,8 @@ Install:
 
 ```bash
 sudo semodule -i tools_local.pp
-sudo semanage fcontext -a -t tools_local_exec_t "$HOME/.dotfiles/(bin/lua-language-server|vendor/(fzf/fzf|fd/fd|delta/delta|difft/difft|zoxide/zoxide|walk/walk|fx/fx|gdu/gdu|tokei/tokei|svu/svu|shellcheck/shellcheck|stylua/stylua|actionlint/actionlint|harper/harper|harper-ls/harper-ls|lua-language-server/bin/lua-language-server|tree-sitter/tree-sitter|zizmor/zizmor))"
-for tool in fzf fd delta difft zoxide walk fx gdu tokei svu shellcheck stylua actionlint harper harper-ls lua-language-server tree-sitter zizmor; do
+sudo semanage fcontext -a -t tools_local_exec_t "$HOME/.dotfiles/(bin/lua-language-server|vendor/(fzf/fzf|fd/fd|hunk/hunk|difft/difft|zoxide/zoxide|walk/walk|fx/fx|gdu/gdu|tokei/tokei|svu/svu|shellcheck/shellcheck|stylua/stylua|actionlint/actionlint|harper/harper|harper-ls/harper-ls|lua-language-server/bin/lua-language-server|tree-sitter/tree-sitter|zizmor/zizmor))"
+for tool in fzf fd hunk difft zoxide walk fx gdu tokei svu shellcheck stylua actionlint harper harper-ls lua-language-server tree-sitter zizmor; do
   if [ -d "$HOME/.dotfiles/vendor/$tool" ]; then
     sudo restorecon -RFv "$HOME/.dotfiles/vendor/$tool"
   fi
@@ -62,7 +62,7 @@ done
 
 The explicit `semanage fcontext` entry is needed because the binaries live under a home-directory path, where the generic home labeling rules otherwise win. This is intentional local configuration, not a policy-source concern.
 
-The regex targets the expected managed entrypoint path for each covered tool. Most tools use `vendor/<tool>/<tool>`. `lua-language-server` also includes the `bin/lua-language-server` wrapper entrypoint because that wrapper is what users normally execute.
+The regex targets the expected managed entrypoint path for each covered tool. Most tools use `vendor/<tool>/<tool>`. `lua-language-server` also includes the `bin/lua-language-server` wrapper entrypoint because that wrapper is what users normally execute. Hunk runs through its normal symlink; Git's pager command and the Fish environment set `HUNK_MCP_DISABLE=1`, so it does not start or connect to the local session daemon.
 
 Run `restorecon` after installing a newly covered tool.
 
@@ -70,8 +70,8 @@ Uninstall:
 
 ```bash
 sudo semodule -r tools_local
-sudo semanage fcontext -d "$HOME/.dotfiles/(bin/lua-language-server|vendor/(fzf/fzf|fd/fd|delta/delta|difft/difft|zoxide/zoxide|walk/walk|fx/fx|gdu/gdu|tokei/tokei|svu/svu|shellcheck/shellcheck|stylua/stylua|actionlint/actionlint|harper/harper|harper-ls/harper-ls|lua-language-server/bin/lua-language-server|tree-sitter/tree-sitter|zizmor/zizmor))"
-for tool in fzf fd delta difft zoxide walk fx gdu tokei svu shellcheck stylua actionlint harper harper-ls lua-language-server tree-sitter zizmor; do
+sudo semanage fcontext -d "$HOME/.dotfiles/(bin/lua-language-server|vendor/(fzf/fzf|fd/fd|hunk/hunk|difft/difft|zoxide/zoxide|walk/walk|fx/fx|gdu/gdu|tokei/tokei|svu/svu|shellcheck/shellcheck|stylua/stylua|actionlint/actionlint|harper/harper|harper-ls/harper-ls|lua-language-server/bin/lua-language-server|tree-sitter/tree-sitter|zizmor/zizmor))"
+for tool in fzf fd hunk difft zoxide walk fx gdu tokei svu shellcheck stylua actionlint harper harper-ls lua-language-server tree-sitter zizmor; do
   if [ -d "$HOME/.dotfiles/vendor/$tool" ]; then
     sudo restorecon -RFv "$HOME/.dotfiles/vendor/$tool"
   fi
