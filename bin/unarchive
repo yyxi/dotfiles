@@ -89,7 +89,7 @@ for file in $argv
             unlzma "$file"
         case "*.Z"
             uncompress "$file"
-        case "*.zip" "*.jar"
+        case "*.zip" "*.jar" "*.xpi"
             unzip "$file" -d "$extract_dir"
         case "*.rar"
             if command -v unrar >/dev/null
