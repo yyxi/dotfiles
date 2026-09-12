@@ -111,10 +111,6 @@
   pushInsteadOf = "git://gist.github.com/"
   pushInsteadOf = "https://gist.github.com/"
 
-[user]
-  email = 178086254+yyxi@users.noreply.github.com
-  name = yyxi
-
 [gpg "ssh"]
   defaultKeyCommand = ssh-add -L
 
