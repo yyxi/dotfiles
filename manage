@@ -562,8 +562,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "ast-grep": {
-        "tag": "0.44.1",
-        "commit": "26f784516b4a9a07f6969b1d5c3020ce42dbf7ed",
+        "tag": "0.45.2",
+        "commit": "c41e023a64060c9f263c23320aa5ff67be4bc474",
         "repository": "ast-grep/ast-grep",
         "assets": {
             "linux_amd64": "app-x86_64-unknown-linux-gnu.zip",
