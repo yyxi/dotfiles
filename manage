@@ -200,8 +200,8 @@ TOOL_CONFIGS = {
     },
     "hunk": {
         "default": True,
-        "tag": "v0.17.1",
-        "commit": "1ebe4a944b7c81217452e4adbc6a0fde70509acc",
+        "tag": "v0.22.0",
+        "commit": "3fdfde2dd77eb93802c43304c8edd34d79ce81de",
         "repository": "modem-dev/hunk",
         "assets": {
             "linux_amd64": "hunkdiff-linux-x64.tar.gz",
@@ -211,18 +211,18 @@ TOOL_CONFIGS = {
         },
         "binaries": ("hunk",),
         "selinux_policy": "tools-local",
-        "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
+        "checksum": {"asset_name": "SHA256SUMS"},
     },
     "difft": {
         "default": True,
-        "tag": "0.69.0",
-        "commit": "90a0f1b6aa88401170405a87be139cbabe00b12a",
+        "tag": "0.71.0",
+        "commit": "b7d119e90ac9f972f03f69508da765dacd302c0c",
         "repository": "Wilfred/difftastic",
         "assets": {
-            "linux_amd64": "difft-x86_64-unknown-linux-gnu.tar.gz",
-            "linux_arm64": "difft-aarch64-unknown-linux-gnu.tar.gz",
-            "darwin_amd64": "difft-x86_64-apple-darwin.tar.gz",
-            "darwin_arm64": "difft-aarch64-apple-darwin.tar.gz",
+            "linux_amd64": "difft-{version}-x86_64-unknown-linux-gnu.tar.gz",
+            "linux_arm64": "difft-{version}-aarch64-unknown-linux-gnu.tar.gz",
+            "darwin_amd64": "difft-{version}-x86_64-apple-darwin.tar.gz",
+            "darwin_arm64": "difft-{version}-aarch64-apple-darwin.tar.gz",
         },
         "binaries": ("difft",),
         "aliases": ("difftastic",),
@@ -335,8 +335,8 @@ TOOL_CONFIGS = {
         },
     },
     "bumblebee": {
-        "tag": "v0.1.1",
-        "commit": "c24089804ee66ece4bec6f14638cb98985389cdb",
+        "tag": "v0.1.2",
+        "commit": "cc57710eeaf685e7b89924a36c8583cad0a378fe",
         "repository": "perplexityai/bumblebee",
         "assets": {
             "linux_amd64": "bumblebee_{version}_linux_amd64.tar.gz",
@@ -346,11 +346,6 @@ TOOL_CONFIGS = {
         },
         "binaries": ("bumblebee",),
         "checksum": {"asset_name": "checksums.txt"},
-        "signature": {
-            "commit": {
-                "allow_unsigned": "upstream tag commit is unsigned for the pinned release",
-            },
-        },
     },
     "cosign": {
         "tag": "v3.0.6",
@@ -387,7 +382,7 @@ TOOL_CONFIGS = {
         "dependencies": ("cosign",),
     },
     "sfw": {
-        "tag": "v1.12.0",
+        "tag": "v1.15.3",
         "commit": "164c32dcbe3bbebcc0b091fd6a31ff93883545b2",
         "repository": "SocketDev/sfw-free",
         "assets": {
@@ -562,8 +557,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "ast-grep": {
-        "tag": "0.45.2",
-        "commit": "c41e023a64060c9f263c23320aa5ff67be4bc474",
+        "tag": "0.45.3",
+        "commit": "979c143639e3588c31f563091e69398683ed34f0",
         "repository": "ast-grep/ast-grep",
         "assets": {
             "linux_amd64": "app-x86_64-unknown-linux-gnu.zip",
