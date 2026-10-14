@@ -2,7 +2,6 @@
   "env": {
     "FORCE_COLOR": "0",
     "NO_COLOR": "1",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "DISABLE_AUTOUPDATER": "1",
     "DISABLE_BUG_COMMAND": "1",
     "DISABLE_ERROR_REPORTING": "1",
@@ -42,13 +41,34 @@
       "Read(*.tfvars)",
       "Read(.npmrc)"
     ],
-    "defaultMode": "plan"
+    "defaultMode": "auto"
   },
+  "model": "claude-fable-5-1[1m]",
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "pluginConfigs": {
+    "cc-plugin-agents-md@builtin": {
+      "options": {
+        "instructionFiles": "claude-md-or-agents-md"
+      }
+    }
+  },
+  "timeFormat": "24-hour",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
+  "editorMode": "normal",
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
+  },
+  "enabledPlugins": {
+    "context-engineering@synced": false
   }
 }
