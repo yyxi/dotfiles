@@ -44,6 +44,9 @@
     "defaultMode": "auto"
   },
   "model": "claude-fable-5-1[1m]",
+  "enabledPlugins": {
+    "context-engineering@synced": false
+  },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "modelSettings": {
@@ -67,8 +70,5 @@
   "editorMode": "normal",
   "feedbackSurveyState": {
     "lastShownTime": 1754337076986
-  },
-  "enabledPlugins": {
-    "context-engineering@synced": false
   }
 }
