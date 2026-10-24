@@ -43,7 +43,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5-1[1m]",
+  "model": "opus",
   "enabledPlugins": {
     "context-engineering@synced": false
   },
@@ -54,7 +54,7 @@
       "effortLevel": "high"
     },
     "claude-opus-5-5": {
-      "effortLevel": "xhigh"
+      "effortLevel": "high"
     }
   },
   "pluginConfigs": {
