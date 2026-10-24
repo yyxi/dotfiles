@@ -54,7 +54,7 @@
 [filter "lfs"]
   clean = git-lfs clean -- %f
   process = git-lfs filter-process
-  required = true
+  required = false
   smudge = git-lfs smudge -- %f
 
 [gpg]
