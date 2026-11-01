@@ -43,7 +43,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "enabledPlugins": {
     "context-engineering@synced": false
   },
