@@ -90,8 +90,8 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "SHA256SUMS"},
     },
     "gh": {
-        "tag": "v2.103.2",
-        "commit": "4f2cfe92e3499f8581bf39db77e0a1431fa7b55c",
+        "tag": "v2.103.3",
+        "commit": "63837fb778d6a39f02be0ce76ff89f2bc8d74bdc",
         "repository": "cli/cli",
         "assets": {
             "linux_amd64": "gh_{version}_linux_amd64.tar.gz",
@@ -104,8 +104,8 @@ TOOL_CONFIGS = {
         "aliases": ("github-cli",),
     },
     "nvim": {
-        "tag": "v0.12.3",
-        "commit": "35b57441b0bac035dcfc591830e82abc560720b1",
+        "tag": "v0.12.6",
+        "commit": "779c36969e31080503be2dfccbcc3f999e289606",
         "repository": "neovim/neovim",
         "assets": {
             "linux_amd64": "nvim-linux-x86_64.tar.gz",
@@ -117,7 +117,7 @@ TOOL_CONFIGS = {
         "strip_components": 1,
         "binaries": ({"name": "nvim", "source": "bin/nvim"},),
         "selinux_policy": "nvim-local",
-        "tag_object": "467d1c7c262130a0416fff0ca4b00281169d1f1d",
+        "tag_object": "022946c802832f938398dfae34b3f277ca9509d4",
         "signature": {
             "tag": "required",
             "commit": {
@@ -185,8 +185,8 @@ TOOL_CONFIGS = {
     },
     "fd": {
         "default": True,
-        "tag": "v10.3.0",
-        "commit": "d38148f0aabdd073b4080cde770f679f3197b920",
+        "tag": "v10.5.0",
+        "commit": "4f81778774463bf414a184cbe6d5219ad2229646",
         "repository": "sharkdp/fd",
         "assets": {
             "linux_amd64": "fd-v{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -200,8 +200,8 @@ TOOL_CONFIGS = {
     },
     "hunk": {
         "default": True,
-        "tag": "v0.22.0",
-        "commit": "3fdfde2dd77eb93802c43304c8edd34d79ce81de",
+        "tag": "v0.24.1",
+        "commit": "9cca76fbf700217b574dfcdd4fe56c5b4388240b",
         "repository": "modem-dev/hunk",
         "assets": {
             "linux_amd64": "hunkdiff-linux-x64.tar.gz",
@@ -215,8 +215,8 @@ TOOL_CONFIGS = {
     },
     "difft": {
         "default": True,
-        "tag": "0.71.0",
-        "commit": "b7d119e90ac9f972f03f69508da765dacd302c0c",
+        "tag": "0.72.0",
+        "commit": "6201bc988aba1f5fc49cd0799461fba2aed5e0cf",
         "repository": "Wilfred/difftastic",
         "assets": {
             "linux_amd64": "difft-{version}-x86_64-unknown-linux-gnu.tar.gz",
@@ -236,8 +236,8 @@ TOOL_CONFIGS = {
     },
     "zoxide": {
         "default": True,
-        "tag": "v0.9.9",
-        "commit": "9cdc6aa3740b4d8a9d62406c99e84c5de49645e9",
+        "tag": "v0.10.0",
+        "commit": "f84f9a3e1d16fabf3e34b199ec7d552993b41f29",
         "repository": "ajeetdsouza/zoxide",
         "assets": {
             "linux_amd64": "zoxide-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -255,8 +255,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "zizmor": {
-        "tag": "v1.25.2",
-        "commit": "b50d8f60e27e0084aa3a5f5dff46054a8253ac2a",
+        "tag": "v1.31.1",
+        "commit": "effdb35fa7868863f11655db256d9008922fa427",
         "repository": "zizmorcore/zizmor",
         "assets": {
             "linux_amd64": "zizmor-x86_64-unknown-linux-gnu.tar.gz",
@@ -298,8 +298,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "age": {
-        "tag": "v1.3.1",
-        "commit": "b8564adb6d58329b8a3e267360ca2b0abc4efe1d",
+        "tag": "v1.3.2",
+        "commit": "b74dce4cdbe35b5e5f66c06d9612b72f89028758",
         "repository": "FiloSottile/age",
         "assets": {
             "linux_amd64": "age-v{version}-linux-amd64.tar.gz",
@@ -361,8 +361,8 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "cosign_checksums.txt"},
     },
     "sops": {
-        "tag": "v3.13.1",
-        "commit": "72e337c45c195e02394ee865f9ec2b794b6b74b4",
+        "tag": "v3.13.3",
+        "commit": "26e2f4784ca61353082c32dbd987c25eda086dc9",
         "repository": "getsops/sops",
         "assets": {
             "linux_amd64": "sops-v{version}.linux.amd64",
@@ -373,16 +373,15 @@ TOOL_CONFIGS = {
         "binaries": ("sops",),
         "checksum": {
             "asset_name": "sops-v{version}.checksums.txt",
-            "certificate_name": "sops-v{version}.checksums.pem",
-            "signature_name": "sops-v{version}.checksums.sig",
-            "certificate_identity_regexp": "https://github.com/getsops",
-            "certificate_issuer": "https://token.actions.githubusercontent.com",
+            "sigstore_bundle_name": "sops-v{version}.checksums.sigstore.json",
+            "bundle_identity_regexp": "https://github.com/getsops",
+            "bundle_issuer": "https://token.actions.githubusercontent.com",
             "verify_sigstore": True,
         },
         "dependencies": ("cosign",),
     },
     "sfw": {
-        "tag": "v1.15.6",
+        "tag": "v1.16.0",
         "commit": "164c32dcbe3bbebcc0b091fd6a31ff93883545b2",
         "repository": "SocketDev/sfw-free",
         "assets": {
@@ -417,8 +416,8 @@ TOOL_CONFIGS = {
         "signature": {"tag": "required"},
     },
     "gdu": {
-        "tag": "v5.36.1",
-        "commit": "8d64b4f1ef50bf6694cd17e060f9fd80aed3e297",
+        "tag": "v5.38.0",
+        "commit": "387cf50377e53bad628603658cfb76fd4a54d718",
         "repository": "dundee/gdu",
         "assets": {
             "linux_amd64": "gdu_linux_amd64.tgz",
@@ -438,7 +437,7 @@ TOOL_CONFIGS = {
             },
         ),
         "checksum": {"asset_name": "sha256sums.txt"},
-        "tag_object": "c6dbf0e669dd68598522f52b4f623e73823c15ea",
+        "tag_object": "f216daf09f1a9318590db94fc9957a37453aa9ef",
         "selinux_policy": "tools-local",
         "signature": {
             "tag": "required",
@@ -448,34 +447,34 @@ TOOL_CONFIGS = {
         },
     },
     "duckdb": {
-        "tag": "v1.5.2",
-        "commit": "8a5851971fae891f292c2714d86046ee018e9737",
+        "tag": "v2.0.0",
+        "commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
         "repository": "duckdb/duckdb",
         "assets": {
-            "linux_amd64": "duckdb_cli-linux-amd64.zip",
-            "linux_arm64": "duckdb_cli-linux-arm64.zip",
-            "darwin_amd64": "duckdb_cli-osx-amd64.zip",
-            "darwin_arm64": "duckdb_cli-osx-arm64.zip",
+            "linux_amd64": "duckdb-cli-linux-amd64.tar.gz",
+            "linux_arm64": "duckdb-cli-linux-arm64.tar.gz",
+            "darwin_amd64": "duckdb-cli-osx-amd64.tar.gz",
+            "darwin_arm64": "duckdb-cli-osx-arm64.tar.gz",
         },
         "binaries": ("duckdb",),
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "doggo": {
-        "tag": "v1.1.5",
-        "commit": "c1e6f89eca428a69529223fffb088bdc31264310",
+        "tag": "v1.4.2",
+        "commit": "021e46ca0a58bd4f4c495296e551074325a41f1e",
         "repository": "mr-karan/doggo",
         "assets": {
-            "linux_amd64": "doggo_{version}_Linux_x86_64.tar.gz",
-            "linux_arm64": "doggo_{version}_Linux_arm64.tar.gz",
-            "darwin_amd64": "doggo_{version}_Darwin_x86_64.tar.gz",
-            "darwin_arm64": "doggo_{version}_Darwin_arm64.tar.gz",
+            "linux_amd64": "doggo-linux-x86_64.tar.gz",
+            "linux_arm64": "doggo-linux-aarch64.tar.gz",
+            "darwin_amd64": "doggo-darwin-x86_64.tar.gz",
+            "darwin_arm64": "doggo-darwin-aarch64.tar.gz",
         },
         "binaries": ("doggo",),
         "checksum": {"asset_name": "doggo_{version}_checksums.txt"},
     },
     "just": {
-        "tag": "1.51.0",
-        "commit": "f92413bb045a058b35206d590c8f3ae147ea68aa",
+        "tag": "1.59.0",
+        "commit": "2638e9c0941edb1f409da7426fa7842887656973",
         "repository": "casey/just",
         "assets": {
             "linux_amd64": "just-{version}-x86_64-unknown-linux-musl.tar.gz",
@@ -487,6 +486,7 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "SHA256SUMS"},
     },
     "tokei": {
+        # Newer releases through v15.0.0 publish no binary assets.
         "tag": "v12.1.2",
         "commit": "7e0b30ff4c1fe78fe2cc615d1f0f52c7ce6cb761",
         "repository": "xampprocky/tokei",
@@ -505,8 +505,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "k6": {
-        "tag": "v2.0.0",
-        "commit": "8c3be52cc17dee055c9e8757a66fb97d946dd248",
+        "tag": "v2.3.0",
+        "commit": "e0887846143ab176d4b5483c9d52cf3b3e009f1a",
         "repository": "grafana/k6",
         "assets": {
             "linux_amd64": "k6-v{version}-linux-amd64.tar.gz",
@@ -518,8 +518,8 @@ TOOL_CONFIGS = {
         "checksum": {"asset_name": "k6-v{version}-checksums.txt"},
     },
     "harper": {
-        "tag": "v2.4.0",
-        "commit": "67e8fe55221ab22ee08db18a3463d427d00e1cba",
+        "tag": "v3.0.0",
+        "commit": "dd536c3009d8f4f8e8e28841fe3115dc944d67bb",
         "repository": "Automattic/harper",
         "assets": {
             "linux_amd64": "harper-cli-x86_64-unknown-linux-musl.tar.gz",
@@ -538,8 +538,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "harper-ls": {
-        "tag": "v2.4.0",
-        "commit": "67e8fe55221ab22ee08db18a3463d427d00e1cba",
+        "tag": "v3.0.0",
+        "commit": "dd536c3009d8f4f8e8e28841fe3115dc944d67bb",
         "repository": "Automattic/harper",
         "assets": {
             "linux_amd64": "harper-ls-x86_64-unknown-linux-musl.tar.gz",
@@ -557,8 +557,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "ast-grep": {
-        "tag": "0.45.3",
-        "commit": "979c143639e3588c31f563091e69398683ed34f0",
+        "tag": "0.51.0",
+        "commit": "48b54b3120b70fa9e8cbb40a03bf3bfebe6bf50a",
         "repository": "ast-grep/ast-grep",
         "assets": {
             "linux_amd64": "app-x86_64-unknown-linux-gnu.zip",
@@ -573,8 +573,8 @@ TOOL_CONFIGS = {
     "tree-sitter": {
         # Installed by default because Vim needs the tree-sitter CLI.
         "default": True,
-        "tag": "v0.26.9",
-        "commit": "7f534862c3ec939c3a6ee147f7600ef5c1bf900f",
+        "tag": "v0.27.1",
+        "commit": "10eb5ac119eec9cb4267a8e035066473983f5f3a",
         "repository": "tree-sitter/tree-sitter",
         "assets": {
             "linux_amd64": "tree-sitter-cli-linux-x64.zip",
@@ -613,8 +613,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "lua-language-server": {
-        "tag": "3.18.2",
-        "commit": "b5e57c36a9a27b89eb283861fb8946fa787e37d8",
+        "tag": "3.19.2",
+        "commit": "b144c872f081373a893b55979142fed651e4425a",
         "repository": "LuaLS/lua-language-server",
         "assets": {
             "linux_amd64": "lua-language-server-{version}-linux-x64.tar.gz",
@@ -639,8 +639,8 @@ TOOL_CONFIGS = {
         "missing_checksum_exception": "upstream release does not publish a checksum manifest for this asset",
     },
     "stylua": {
-        "tag": "v2.5.2",
-        "commit": "5ae6e7a55748414b4be30a832afd895014c65352",
+        "tag": "v2.6.0",
+        "commit": "56f9630407f6bf6ee524fb1d7fe71f005a570478",
         "repository": "JohnnyMorganz/StyLua",
         "assets": {
             "linux_amd64": "stylua-linux-x86_64-musl.zip",
