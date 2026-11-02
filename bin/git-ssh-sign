@@ -1,0 +1,452 @@
+#!/usr/bin/env -S PYTHONCOERCECLOCALE=0 python3
+"""gpg.ssh.program for git that chooses the signing key the way ssh(1)
+chooses keys for public key authentication, then signs with ssh-keygen(1).
+
+Git runs ``<program> -Y sign -n git -f <user.signingKey> [-U] <file>`` and
+reads the signature from ``<file>.sig``. Only that form of request gets key
+selection. Every other invocation (verify, find-principals,
+check-novalidate, other options, several files or standard input, a file
+that ssh-keygen could not read or sign next to) is handed to ssh-keygen
+unchanged, so it behaves and fails exactly as ssh-keygen does.
+
+When signing, the -f key plays the part of ssh's IdentityFile, and the
+candidates follow pubkey_prepare() in OpenSSH's sshconnect2.c:
+
+  1. agent keys that match the key file or its -cert variant, in agent order
+  2. every other agent key, in agent order
+  3. the key file and its -cert variant, if the agent does not hold them
+
+As in ssh, each candidate is tried once, and a failure moves on to the next.
+A key file that is missing or unreadable fails its turn, as in ssh. This
+includes git's -U for a key:: key: if the agent lacks that key, other agent
+keys still come first.
+
+Differences from ssh, all deliberate or inherited from ssh-keygen:
+
+- Signing has no remote host, so ssh_config is not read. ssh's defaults
+  apply: IdentitiesOnly=no, no CertificateFile, no PKCS#11 provider, and
+  RequiredRSASize=1024, which ssh-add already enforces when listing keys.
+- user.signingKey is a path that git has already expanded, not an
+  ssh_config value, so "%" tokens and the "none" keyword have no meaning.
+- Key blobs read from files are checked for a known key type only; ssh also
+  validates the key material. A corrupt key line can therefore stop the
+  search where ssh would read on to the next line.
+- Agent keys are read from `ssh-add -L`, which prints key comments as is.
+  A comment containing a newline can add a line for a key the agent does
+  not hold; signing with it fails and the next candidate is tried.
+- ssh-keygen can only pair a certificate with its private key when the
+  certificate file is named "<key>-cert.pub", not "<key>-cert".
+
+Differences from running ssh-keygen directly: ssh-keygen gets the default
+SIGPIPE and SIGXFSZ handling even if the caller ignored those signals,
+because Python does not record what it inherited. The first line sets
+PYTHONCOERCECLOCALE=0 so that Python leaves LC_CTYPE alone (PEP 538) and
+ssh-keygen sees the caller's locale.
+
+Requires Python 3.9 or later. Written against OpenSSH 9.9p1 and git 2.52.
+"""
+
+import base64
+import binascii
+import getopt
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+from typing import Dict, List, NamedTuple, NoReturn, Optional, Tuple
+
+SSH_KEYGEN = "ssh-keygen"
+SSH_ADD = "ssh-add"
+
+# ssh-keygen's getopt(3) option string, from main() in ssh-keygen.c. OpenSSH
+# uses BSD getopt, which stops at the first operand, as getopt.getopt() does.
+KEYGEN_OPTIONS = "ABHKLQUXceghiklopquvyC:D:E:F:I:M:N:O:P:R:V:Y:Z:a:b:f:g:m:n:r:s:t:w:z:"
+GIT_SIGN_OPTIONS = {"-Y", "-n", "-f", "-U"}
+
+KeyType = Tuple[str, Optional[str]]  # (key type, ECDSA curve)
+
+# Key type names accepted by sshkey_read(). Must equal `ssh -Q key-sig`;
+# the tests check this against the installed ssh.
+KEY_TYPES: Dict[bytes, KeyType] = {
+    b"ssh-ed25519": ("ed25519", None),
+    b"ssh-ed25519-cert-v01@openssh.com": ("ed25519-cert", None),
+    b"sk-ssh-ed25519@openssh.com": ("ed25519-sk", None),
+    b"sk-ssh-ed25519-cert-v01@openssh.com": ("ed25519-sk-cert", None),
+    b"ecdsa-sha2-nistp256": ("ecdsa", "nistp256"),
+    b"ecdsa-sha2-nistp256-cert-v01@openssh.com": ("ecdsa-cert", "nistp256"),
+    b"ecdsa-sha2-nistp384": ("ecdsa", "nistp384"),
+    b"ecdsa-sha2-nistp384-cert-v01@openssh.com": ("ecdsa-cert", "nistp384"),
+    b"ecdsa-sha2-nistp521": ("ecdsa", "nistp521"),
+    b"ecdsa-sha2-nistp521-cert-v01@openssh.com": ("ecdsa-cert", "nistp521"),
+    b"sk-ecdsa-sha2-nistp256@openssh.com": ("ecdsa-sk", "nistp256"),
+    b"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com": ("ecdsa-sk-cert", "nistp256"),
+    b"webauthn-sk-ecdsa-sha2-nistp256@openssh.com": ("ecdsa-sk", "nistp256"),
+    b"ssh-rsa": ("rsa", None),
+    b"ssh-rsa-cert-v01@openssh.com": ("rsa-cert", None),
+    b"rsa-sha2-256": ("rsa", None),
+    b"rsa-sha2-256-cert-v01@openssh.com": ("rsa-cert", None),
+    b"rsa-sha2-512": ("rsa", None),
+    b"rsa-sha2-512-cert-v01@openssh.com": ("rsa-cert", None),
+}
+
+# Public key fields between the nonce and the serial of each certificate
+# type (PROTOCOL.certkeys).
+CERT_KEY_FIELDS = {
+    "rsa-cert": 2,
+    "ecdsa-cert": 2,
+    "ed25519-cert": 1,
+    "ecdsa-sk-cert": 3,
+    "ed25519-sk-cert": 2,
+}
+SSH2_CERT_TYPE_USER = 1
+
+MARK_BEGIN = b"-----BEGIN OPENSSH PRIVATE KEY-----\n"
+MARK_END = b"-----END OPENSSH PRIVATE KEY-----\n"
+AUTH_MAGIC = b"openssh-key-v1\0"
+
+
+class SignRequest(NamedTuple):
+    """A signing request in the form git sends it."""
+
+    sign_op: str  # -Y value; ssh-keygen accepts any word starting with "sign"
+    namespace: str
+    key_path: str  # user.signingKey, or git's temporary file for key::
+    require_agent: bool  # -U: git says the key is in the agent
+    data_file: str
+
+
+class Identity(NamedTuple):
+    """A signing key candidate, like ssh's struct identity."""
+
+    blob: Optional[bytes]  # public key; None if the file has none ssh reads
+    key_file: Optional[str]  # file to sign with; None for an agent key
+
+
+class Terminated(Exception):
+    def __init__(self, signum: int) -> None:
+        super().__init__(signum)
+        self.signum = signum
+
+
+def main(args: List[str]) -> int:
+    request = parse_git_sign_request(args)
+    if request is None:
+        exec_keygen(args)
+    return sign(request, args)
+
+
+def parse_git_sign_request(args: List[str]) -> Optional[SignRequest]:
+    """The request if args has git's form and ssh-keygen would get as far as
+    loading the key (main() and sig_sign() in ssh-keygen.c); else None."""
+    try:
+        opts, operands = getopt.getopt(args, KEYGEN_OPTIONS)
+    except getopt.GetoptError:
+        return None
+    values = dict(opts)  # later options override earlier ones, as in getopt
+    if not set(values) <= GIT_SIGN_OPTIONS:
+        return None
+    if not values.get("-Y", "").startswith("sign"):
+        return None
+    if not values.get("-n") or "-f" not in values:
+        return None
+    if len(operands) != 1 or operands[0] == "-":
+        return None
+    data_file = operands[0]
+    # ssh-keygen opens the file and writes <file>.sig only after it has a
+    # key. A request that cannot succeed goes to ssh-keygen as is, so that
+    # it fails once instead of once per candidate.
+    directory = os.path.dirname(data_file) or "."
+    if not os.access(data_file, os.R_OK):
+        return None
+    if not os.access(directory, os.W_OK | os.X_OK):
+        return None
+    return SignRequest(
+        values["-Y"], values["-n"], values["-f"], "-U" in values, data_file
+    )
+
+
+def sign(request: SignRequest, args: List[str]) -> int:
+    identities = candidates(request.key_path)
+    if not identities:
+        print(
+            f"git-ssh-sign: {request.key_path} is a certificate that is not a"
+            " user certificate, and the agent has no keys",
+            file=sys.stderr,
+        )
+        return 255
+    if identities == [Identity(identities[0].blob, request.key_path)]:
+        exec_keygen(args)  # no other key: exactly what ssh-keygen would do
+
+    for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, raise_terminated)
+
+    status = 255
+    with tempfile.TemporaryDirectory(prefix="git-ssh-sign.") as tmp:
+        for n, identity in enumerate(identities):
+            if identity.key_file is None:
+                key_file = os.path.join(tmp, f"agent-key-{n}.pub")
+                write_public_key(key_file, identity.blob)
+                argv = keygen_argv(request, key_file, require_agent=True)
+            else:
+                argv = keygen_argv(request, identity.key_file, request.require_agent)
+            status = run_keygen(argv)
+            if status == 0:
+                break
+            if status < 0:
+                raise Terminated(-status)
+    return status
+
+
+def candidates(key_path: str) -> List[Identity]:
+    """Signing keys in the order ssh would try them: load_public_identity_files()
+    in ssh.c, then pubkey_prepare() in sshconnect2.c."""
+    files = [Identity(load_public(key_path)[0], key_path)]
+    cert, cert_file = load_public(key_path + "-cert")
+    if cert is not None and is_certificate(cert):
+        files.append(Identity(cert, cert_file))
+    files = [f for f in files if f.blob is None or is_user_identity(f.blob)]
+
+    matched: List[Identity] = []
+    others: List[Identity] = []
+    for blob in agent_keys():
+        for n, file_identity in enumerate(files):
+            if file_identity.blob == blob:
+                del files[n]  # ssh uses it through the agent only
+                matched.append(Identity(blob, None))
+                break
+        else:
+            others.append(Identity(blob, None))
+    return matched + others + files
+
+
+def keygen_argv(request: SignRequest, key_file: str, require_agent: bool) -> List[str]:
+    argv = [SSH_KEYGEN, "-Y", request.sign_op, "-n", request.namespace]
+    argv += ["-f", key_file]
+    if require_agent:
+        argv.append("-U")
+    return argv + ["--", request.data_file]
+
+
+def run_keygen(argv: List[str]) -> int:
+    """Run ssh-keygen and return its exit status. A signal that stops this
+    wrapper is passed on, so ssh-keygen can restore the terminal (after a
+    passphrase prompt, for example) and exit as it would have on its own."""
+    with subprocess.Popen(argv) as child:
+        try:
+            return child.wait()
+        except Terminated as e:
+            child.send_signal(e.signum)
+            raise
+
+
+def exec_keygen(args: List[str]) -> NoReturn:
+    # Python ignores these signals, and exec(2) keeps ignored signals
+    # ignored. Restore the defaults that ssh-keygen gets when started from a
+    # shell, as subprocess does for its children.
+    for name in ("SIGPIPE", "SIGXFSZ"):
+        signal.signal(getattr(signal, name), signal.SIG_DFL)
+    try:
+        os.execvp(SSH_KEYGEN, [SSH_KEYGEN] + args)
+    except OSError as e:
+        e.filename = SSH_KEYGEN  # execvp() does not name the program
+        raise
+
+
+def raise_terminated(signum: int, frame: object) -> None:
+    raise Terminated(signum)
+
+
+def die_by_signal(signum: int) -> NoReturn:
+    """Exit the way the signal would have ended the process."""
+    if signum != signal.SIGKILL:  # SIGKILL cannot be handled, nor reset
+        signal.signal(signum, signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+    sys.exit(128 + signum)
+
+
+def agent_keys() -> List[bytes]:
+    """Public keys held by the agent at $SSH_AUTH_SOCK, in agent order.
+
+    ssh-add lists them with ssh_fetch_identitylist(), the function ssh uses,
+    so keys that ssh would skip are skipped here too. As in ssh, a missing or
+    failing agent means no agent keys, and the reason is not reported: ssh
+    logs it only at debug level.
+    """
+    listing = subprocess.run(
+        [SSH_ADD, "-L"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    if listing.returncode != 0:
+        return []
+    keys = []
+    for line in listing.stdout.split(b"\n"):
+        blob = read_key(line)
+        if blob is not None:
+            keys.append(blob)
+    return keys
+
+
+def write_public_key(path: str, blob: Optional[bytes]) -> None:
+    if blob is None:
+        raise ValueError("agent key without a public key")
+    name = read_string(blob, 0)[0]
+    with open(path, "wb") as f:
+        f.write(name + b" " + base64.b64encode(blob) + b"\n")
+
+
+def load_public(path: str) -> Tuple[Optional[bytes], str]:
+    """sshkey_load_public() in authfile.c: the key, and the file read."""
+    for candidate in (path, path + ".pub"):
+        blob = try_load_public(candidate)
+        if blob is not None:
+            return blob, candidate
+    return load_pubkey_from_private(path), path
+
+
+def try_load_public(path: str) -> Optional[bytes]:
+    """sshkey_try_load_public() in authfile.c: the first key line."""
+    try:
+        with open(path, "rb") as f:
+            for line in f:
+                line = line.split(b"\0", 1)[0]  # C string semantics
+                if line[:1] in (b"#", b"\n", b""):
+                    continue
+                if line.startswith(b"-----BEGIN") or line == b"SSH PRIVATE KEY FILE":
+                    return None
+                line = line.lstrip(b" \t")
+                if line:
+                    blob = read_key(line)
+                    if blob is not None:
+                        return blob
+    except OSError:
+        pass  # sshkey_try_load_public() fails the same way
+    return None
+
+
+def load_pubkey_from_private(path: str) -> Optional[bytes]:
+    """sshkey_parse_private2_pubkey() in sshkey.c: the public key stored
+    unencrypted in an OpenSSH-format private key file."""
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if len(data) < len(MARK_BEGIN) + len(MARK_END) or not data.startswith(MARK_BEGIN):
+        return None
+    # private2_uudecode(): collect the text up to the end marker, which must
+    # start a line, dropping line breaks.
+    encoded = bytearray()
+    pos = len(MARK_BEGIN)
+    found_end = False
+    while pos < len(data) and not found_end:
+        c = data[pos]
+        pos += 1
+        if c not in b"\r\n":
+            encoded.append(c)
+        found_end = c == ord("\n") and data.startswith(MARK_END, pos)
+    if not found_end:
+        return None
+    try:
+        decoded = b64decode(bytes(encoded))
+        if not decoded.startswith(AUTH_MAGIC):
+            return None
+        pos = len(AUTH_MAGIC)
+        for _ in range(3):  # cipher, KDF name, KDF options
+            pos = read_string(decoded, pos)[1]
+        if decoded[pos : pos + 4] != (1).to_bytes(4, "big"):  # one key only
+            return None
+        blob = read_string(decoded, pos + 4)[0]
+    except ValueError:
+        return None
+    return blob if key_type(blob) is not None else None
+
+
+def read_key(cp: bytes) -> Optional[bytes]:
+    """sshkey_read() in sshkey.c: parse "<type> <base64 blob>[ comment]"."""
+    space = strcspn(cp, b" \t")
+    if space == len(cp):
+        return None
+    declared = KEY_TYPES.get(cp[:space])
+    if declared is None:
+        return None
+    cp = cp[space:].lstrip(b" \t")
+    if not cp:
+        return None
+    try:
+        blob = b64decode(cp[: strcspn(cp, b" \t")])
+    except ValueError:
+        return None
+    if key_type(blob) != declared:
+        return None
+    return blob
+
+
+def is_certificate(blob: bytes) -> bool:
+    kind = key_type(blob)
+    return kind is not None and kind[0] in CERT_KEY_FIELDS
+
+
+def is_user_identity(blob: bytes) -> bool:
+    """False for certificates that are not user certificates, which
+    pubkey_prepare() ignores."""
+    kind = key_type(blob)
+    if kind is None or kind[0] not in CERT_KEY_FIELDS:
+        return True
+    try:
+        pos = read_string(blob, 0)[1]
+        for _ in range(1 + CERT_KEY_FIELDS[kind[0]]):  # nonce, key fields
+            pos = read_string(blob, pos)[1]
+    except ValueError:
+        return True  # ssh fails to load it and keeps the file as an identity
+    cert_type = blob[pos + 8 : pos + 12]  # after the 64-bit serial
+    if len(cert_type) != 4:
+        return True
+    return int.from_bytes(cert_type, "big") == SSH2_CERT_TYPE_USER
+
+
+def key_type(blob: bytes) -> Optional[KeyType]:
+    try:
+        name = read_string(blob, 0)[0]
+    except ValueError:
+        return None
+    return KEY_TYPES.get(name)
+
+
+def read_string(buf: bytes, pos: int) -> Tuple[bytes, int]:
+    """An SSH wire-format string at pos, and the position after it."""
+    if pos + 4 > len(buf):
+        raise ValueError("truncated string length")
+    end = pos + 4 + int.from_bytes(buf[pos : pos + 4], "big")
+    if end > len(buf):
+        raise ValueError("truncated string")
+    return buf[pos + 4 : end], end
+
+
+def b64decode(encoded: bytes) -> bytes:
+    """b64_pton() as used by sshbuf_b64tod(): whitespace is ignored and
+    anything else outside the alphabet, or bad padding, is an error."""
+    try:
+        return base64.b64decode(encoded.translate(None, b" \t\n\v\f\r"), validate=True)
+    except binascii.Error as e:
+        raise ValueError(str(e)) from e
+
+
+def strcspn(s: bytes, reject: bytes) -> int:
+    for i, c in enumerate(s):
+        if c in reject:
+            return i
+    return len(s)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        die_by_signal(signal.SIGINT)
+    except Terminated as e:
+        die_by_signal(e.signum)
+    except OSError as e:
+        sys.exit(f"git-ssh-sign: {e}")

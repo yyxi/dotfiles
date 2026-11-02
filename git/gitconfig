@@ -114,9 +114,10 @@
 [user]
   email = 178086254+yyxi@users.noreply.github.com
   name = yyxi
+  signingKey = ~/.ssh/id_ed25519
 
 [gpg "ssh"]
-  defaultKeyCommand = ssh-add -L
+  program = ~/.dotfiles/bin/git-ssh-sign
 
 [rerere]
   enabled = true
