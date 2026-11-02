@@ -2767,7 +2767,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip SELinux policy compilation, installation, and relabeling",
     )
-    install_parser.add_argument("names", nargs="*", help="optional tool names to install")
+    install_parser.add_argument(
+        "names", nargs="*", help="optional tool names to install"
+    )
     subparsers.add_parser("clean", help="clean runcom symlinks")
     subparsers.add_parser(
         "whitelabel", help="force whitelabel to trunk plus the saved patch"
