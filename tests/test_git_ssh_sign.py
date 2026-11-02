@@ -21,10 +21,12 @@ import select
 import shutil
 import signal
 import socket
+import socketserver
 import subprocess
 import sys
 import tempfile
 import termios
+import threading
 import time
 import unittest
 
@@ -338,6 +340,77 @@ class DeadAgent(NoAgent):
     """SSH_AUTH_SOCK names a socket nobody listens on."""
 
     env = dict(BASE_ENV, SSH_AUTH_SOCK=os.path.join(ROOT, "no-agent"))
+
+
+SSH_AGENT_FAILURE = 5
+SSH2_AGENTC_REQUEST_IDENTITIES = 11
+SSH2_AGENT_IDENTITIES_ANSWER = 12
+SSH2_AGENTC_SIGN_REQUEST = 13
+
+
+def ssh_string(data):
+    return len(data).to_bytes(4, "big") + data
+
+
+def recv_exact(conn, size):
+    data = b""
+    while len(data) < size:
+        chunk = conn.recv(size - len(data))
+        if not chunk:
+            return None
+        data += chunk
+    return data
+
+
+class HangUpAgent:
+    """An agent that lists its keys but, asked to sign, waits and then drops
+    the connection without answering, as 1Password does when its approval
+    prompt times out (ssh-keygen: "communication with agent failed")."""
+
+    def __init__(self, keys, delay):
+        blobs = [base64.b64decode(slurp(f"{key}.pub").split()[1]) for key in keys]
+        identities = (
+            bytes([SSH2_AGENT_IDENTITIES_ANSWER])
+            + len(blobs).to_bytes(4, "big")
+            + b"".join(ssh_string(b) + ssh_string(b"hang-up") for b in blobs)
+        )
+
+        class Handler(socketserver.BaseRequestHandler):
+            def handle(self):
+                while True:
+                    header = recv_exact(self.request, 4)
+                    if header is None:
+                        return
+                    body = recv_exact(self.request, int.from_bytes(header, "big"))
+                    if not body:
+                        return
+                    if body[0] == SSH2_AGENTC_SIGN_REQUEST:
+                        time.sleep(delay)
+                        return  # hang up without a reply
+                    if body[0] == SSH2_AGENTC_REQUEST_IDENTITIES:
+                        reply = identities
+                    else:
+                        reply = bytes([SSH_AGENT_FAILURE])
+                    self.request.sendall(ssh_string(reply))
+
+        # Short path: sun_path holds about 108 bytes.
+        self.dir = tempfile.mkdtemp(prefix="gssa.")
+        self.sock = os.path.join(self.dir, "sock")
+        self.server = socketserver.ThreadingUnixStreamServer(self.sock, Handler)
+        self.server.daemon_threads = True
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    @property
+    def env(self):
+        return dict(BASE_ENV, SSH_AUTH_SOCK=self.sock)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.server.shutdown()
+        self.server.server_close()
+        shutil.rmtree(self.dir, ignore_errors=True)
 
 
 def empty_agent():
@@ -686,6 +759,16 @@ class Signing(unittest.TestCase):
         with Agent([f"{K}/B"], restrict=[f"{K}/B"]) as a:
             err = self.expect(f"{K}/A", a, f"{K}/A.pub")
             self.assertIn("agent refused operation", err)
+
+    def test_agent_hanging_up_falls_back(self):
+        delay = 0.5
+        with HangUpAgent([f"{K}/B"], delay) as a:
+            start = time.monotonic()
+            err = self.expect(f"{K}/A", a, f"{K}/A.pub")
+            self.assertGreaterEqual(time.monotonic() - start, delay)
+            self.assertIn("communication with agent failed", err)
+            err = self.expect(f"{K}/missing", a, None)
+            self.assertIn("communication with agent failed", err)
 
     def test_dead_agent_socket_means_no_agent_keys(self):
         self.expect(f"{K}/A", DeadAgent(), f"{K}/A.pub")
