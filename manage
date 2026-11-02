@@ -2767,7 +2767,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip SELinux policy compilation, installation, and relabeling",
     )
-    install_parser.add_argument("name", nargs="?", help="optional tool name to install")
+    install_parser.add_argument("names", nargs="*", help="optional tool names to install")
     subparsers.add_parser("clean", help="clean runcom symlinks")
     subparsers.add_parser(
         "whitelabel", help="force whitelabel to trunk plus the saved patch"
@@ -2821,21 +2821,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.command == "install":
             platform = current_platform()
             selinux_policy_status: Dict[str, bool] = {}
-            if args.name == "context-engineering":
-                if args.offline:
-                    warn("offline install; skipping context-engineering clone")
-                else:
-                    install_context_engineering(paths, explicit=True)
-            elif args.name:
-                install_tool_names(
-                    paths,
-                    platform,
-                    tools,
-                    [args.name],
-                    offline=args.offline,
-                    disable_selinux=args.disable_selinux,
-                    selinux_policy_status=selinux_policy_status,
-                )
+            if args.names:
+                tool_names = [
+                    name for name in args.names if name != "context-engineering"
+                ]
+                if tool_names:
+                    install_tool_names(
+                        paths,
+                        platform,
+                        tools,
+                        tool_names,
+                        offline=args.offline,
+                        disable_selinux=args.disable_selinux,
+                        selinux_policy_status=selinux_policy_status,
+                    )
+                if "context-engineering" in args.names:
+                    if args.offline:
+                        warn("offline install; skipping context-engineering clone")
+                    else:
+                        install_context_engineering(paths, explicit=True)
             else:
                 install_default(
                     paths,
